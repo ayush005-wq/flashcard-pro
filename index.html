@@ -1,452 +1,648 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Flashcard Trainer Pro</title>
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#ffaa33" />
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('service-worker.js').then(() => {
-        console.log('Service Worker Registered');
-      }).catch(console.error);
-    }
-  </script>
-
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Flashcard Trainer Pro</title>
   <style>
-    /* Your existing CSS styles unchanged except for these additions */
-    /* ... (your existing styles here) ... */
-    .auth-btns-container {
-      margin-bottom: 15px;
+    :root {
+      --bg: #111316;
+      --flashcard-bg: #24282a;
+      --tile-bg: #191f26e0;
+      --tile-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 1.5px 8px #ffb35210;
+      --card-shadow: 0 14px 32px rgba(0,0,0,0.37), 0 4px 48px 2px #ffc52319;
+      --yellow: #f5d76e;
+      --orange: #ffaa33;
+      --accent: #ffb300;
+      --danger: #e75746;
+      --border: 2.2px solid #30343c70;
+      --active: #a1aefedd;
+      --card-radius: 21px;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--yellow);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-width: 100vw; min-height: 100vh;
+      box-sizing: border-box;
+    }
+    body { display: flex; flex-direction: column; align-items: center; }
+    .main-wrap {
+      min-height: 100vh;
+      min-width: 100vw;
+      width: 100vw;
+      box-sizing: border-box;
+      padding: 18px 4vw;
       display: flex;
-      gap: 20px;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      background: var(--bg);
+      max-width: 440px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: var(--accent);
+      margin-bottom: 22px;
+      font-weight: 800;
+      font-size: 2.22rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #000c;
+      text-align: center;
+      width: 100%;
+    }
+    .auth-buttons {
+      margin-bottom: 18px;
+      width: 100%;
+      display: flex;
       flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+    }
+    .auth-buttons .btn {
+      background: linear-gradient(90deg, #ffaa33, #ffbf40);
+      color: #1b1300;
+      font-weight: 700;
+      border-radius: 24px;
+      padding: 13px 32px;
+      border: none;
+      cursor: pointer;
+      font-size: 1.13rem;
+      box-shadow: 0 0 18px 4px #ffdab359, 0 2px 16px #2824147a;
+      text-align: center;
+      min-width: 172px;
+      transition: background 0.28s, color 0.21s, box-shadow 0.25s;
+      border: var(--border);
+      user-select: auto;
+    }
+    .auth-buttons .btn:hover, .auth-buttons .btn:focus { 
+      background: linear-gradient(90deg, #ffd54f, #ffeb83); 
+      color: #2e2a1b; 
+      outline: none;
+    }
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 17px;
+      margin-bottom: 26px;
+      justify-content: center;
+      width: 100%;
+    }
+    .btn {
+      background: linear-gradient(93deg, #ffaa33, #ffc622 70%);
+      border: none;
+      color: #292312;
+      font-weight: 700;
+      border-radius: 17px;
+      padding: 0.8rem 2.3rem;
+      font-size: 1.11rem;
+      cursor: pointer;
+      box-shadow: 0 3px 14px #20285d30, 0 0.5px 4px #00000012;
+      border: var(--border);
+      transition: background .2s, color .19s, box-shadow .16s;
+      user-select: none;
+      min-width: 130px;
+      text-align: center;
+    }
+    .btn:disabled { opacity: 0.44; filter: grayscale(60%); cursor: not-allowed;}
+    .btn:hover, .btn:focus-visible { background: linear-gradient(93deg, #495cff, #ffc815 89%); color: #fff;}
+
+    /* Tiles and card styling */
+    .set-tiles {
+      display: flex; flex-wrap: wrap; gap: 23px 16px; justify-content: center;
+      width: 100%; max-width: 520px; margin: 0 auto;
+    }
+    .tile {
+      position: relative;
+      width: 230px; min-height: 100px;
+      border-radius: var(--card-radius);
+      background: var(--tile-bg);
+      box-shadow: var(--tile-shadow);
+      padding: 1.13rem 1.26rem .9rem 1.23rem;
+      border: var(--border);
+      margin: 0 auto 10px auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      cursor: pointer; color: var(--yellow);
+      backdrop-filter: blur(2.5px);
+      transition: background .2s, box-shadow .15s;
+      z-index: 1;
+      user-select: none;
+    }
+    .tile:hover, .tile:focus-visible {
+      background: #232738d6;
+      box-shadow: 0 14px 36px 7px #f2be4b24, 0 2px 10px #0002;
+      outline: 2.5px solid var(--accent);
+      outline-offset: 1.5px;
+    }
+    .tile strong {
+      font-size: 1.17rem; font-weight: 620; color: var(--accent);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 5px; letter-spacing: .08em;
+      user-select: text;
+    }
+    .tile-preview {
+      color: var(--orange); font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
+      user-select: text;
+    }
+    .tile .delete-btn {
+      position: absolute; right: 14px; bottom: 9px; background: var(--danger);
+      border-radius: 16px; padding: 4px 11px; font-size: .86rem; font-weight: 600; border: none; color: white; cursor: pointer; transition: background .18s;
+      border: var(--border);
+      z-index: 3;
+      user-select: none;
+    }
+    .tile .delete-btn:hover { background: #ff433a;}
+    .tile input[type='checkbox'] { accent-color: var(--accent); margin-right: 8px; transform: scale(1.18); cursor: pointer; user-select: auto;}
+    .form-box {
+      background: #1d2630e3;
+      padding: 25px 16px;
+      border-radius: 22px;
+      box-shadow: 0 7px 15px #0007, 0 2.5px 18px #f8c63f13;
+      color: var(--yellow);
+      margin: 0 auto 32px auto;
+      width: 100%; max-width: 410px;
+      border: var(--border);
+      box-sizing: border-box;
+      user-select: none;
+    }
+    textarea, input[type='text'], input[type='number'] {
+      background: #181a20e6;
+      border: 1.8px solid #3b4750;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 1.12rem;
+      color: var(--yellow);
+      width: 100%; min-width: 0;
+      max-width: 100%;
+      min-height: 52px;
+      resize: vertical;
+      font-weight: 500;
+      box-sizing: border-box;
+      transition: border-color .23s, background .2s;
+    }
+    textarea:focus, input:focus {
+      background: #22272e;
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .card-shell {
+      width: 99vw; max-width: 410px; min-height: 170px;
+      margin: 20px auto 8px auto;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .top-progress { color: var(--yellow); font-size: 1.12rem; font-weight: 600; letter-spacing: .09em; padding-left: 5px; margin-bottom: 14px;}
+    .card {
+      background: var(--flashcard-bg); border-radius: 21px;
+      box-shadow: var(--card-shadow);
+      border: var(--border);
+      font-size: 1.26rem;
+      min-height: 115px; width: 100%;
+      padding: 22px 19px;
+      color: var(--yellow);
+      cursor: pointer; user-select: none; text-align: center;
+      overflow-wrap: break-word;
+      transition: background 0.17s, box-shadow 0.22s, color 0.15s;
+      margin-bottom: 12px;
+      will-change: transform, opacity;
+      z-index: 2;
+    }
+    .card.flipped {
+      background: #394822;
+      color: var(--orange);
+    }
+    /* Slide animations */
+    @keyframes slideInRight {
+      0% {transform:translateX(110vw);opacity: 0;}
+      90% {opacity: 1;}
+      100% {transform:translateX(0);}
+    }
+    @keyframes slideOutLeft {
+      0% {transform:translateX(0);opacity: 1;}
+      100% {transform:translateX(-110vw); opacity:0;}
+    }
+    /* Animate on card change with class .slide-in or .slide-out */
+    .slide-in { animation: slideInRight 0.44s cubic-bezier(.87,0,.18,1) both;}
+    .slide-out { animation: slideOutLeft 0.39s cubic-bezier(.77,0,.24,1) both;}
+    .nav-panel { display: flex; justify-content: space-between; gap: 13px; flex-wrap: wrap; margin-bottom: 10px;}
+    .mini-btn {
+      flex-grow: 1; min-width: 82px; padding: 8px 15px;
+      border-radius: 16px; background: linear-gradient(93deg, #495cff 0%, #ffb300 100%);
+      border: none; color: white; font-weight: 700; font-size: 1.04rem; cursor: pointer; margin-bottom: 3px;
+      transition: background 0.16s;
+    }
+    .mini-btn:disabled { opacity: .5; filter: grayscale(.3); cursor: not-allowed; }
+    .endBtn { background: var(--danger) !important; }
+    .score-bar {
+      font-weight: 700; color: var(--orange); font-size: 1.08rem;
+      margin-bottom: 8px; margin-top: 3px; text-align:center; letter-spacing: .03em;
+    }
+    @media (max-width: 650px) {
+      .main-wrap {padding: 11px;}
+      .tile {width: 97vw !important; min-width: 0;}
+      .form-box, .card-shell {padding: 8px 0;}
+      .card {font-size: 1.07rem; min-height: 80px;}
+      button {font-size:1rem;}
+      .set-tiles {padding:0 4px;}
+    }
+    @media (min-width:651px) and (max-width:1024px){
+      .tile {width: 47vw !important; max-width:330px;}
+      .card-shell,.form-box{max-width:370px;}
     }
   </style>
-
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div class="main-wrap">
     <h1>Flashcard Trainer Pro</h1>
-    <div class="auth-btns-container">
-      <button class="btn" id="signInBtn">Sign In with Google</button>
-      <button class="btn" id="signOutBtn" style="display:none;">Sign Out</button>
+    <div class="auth-buttons">
+      <button class="btn" id="signInBtn" type="button">Sign In with Google</button>
+      <button class="btn" id="signOutBtn" style="display:none;" type="button">Sign Out</button>
     </div>
-    <div class="button-group" id="mainButtons">
-      <button class="btn" id="makeBtn" disabled>Make Flashcards</button>
-      <button class="btn" id="testBtn" disabled>Take Test</button>
-      <button class="btn" id="analyticsBtn" disabled>Analytics</button>
+    <div class="button-group">
+      <button class="btn" id="makeBtn" disabled type="button">Make Flashcards</button>
+      <button class="btn" id="testBtn" disabled type="button">Take Test</button>
+      <button class="btn" id="analyticsBtn" disabled type="button">Analytics</button>
     </div>
     <div id="app"></div>
   </div>
+  <script>
+    // --- Firebase Config ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyDBQZZerHyXkYm-dww6Sqs60P1-y9Yz2yE",
+      authDomain: "flashcard-trainer-pro.firebaseapp.com",
+      projectId: "flashcard-trainer-pro",
+      storageBucket: "flashcard-trainer-pro.appspot.com",
+      messagingSenderId: "766758365393",
+      appId: "1:766758365393:web:df70ae93689ad7c917fdf0",
+      measurementId: "G-TLHWDKWGT3"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const provider = new firebase.auth.GoogleAuthProvider();
 
-<script>
-  // Firebase config and initialization
-  const firebaseConfig = {
-    apiKey: "AIzaSyDBQZZerHyXkYm-dww6Sqs60P1-y9Yz2yE",
-    authDomain: "flashcard-trainer-pro.firebaseapp.com",
-    projectId: "flashcard-trainer-pro",
-    storageBucket: "flashcard-trainer-pro.firebasestorage.app",
-    messagingSenderId: "766758365393",
-    appId: "1:766758365393:web:df70ae93689ad7c917fdf0",
-    measurementId: "G-TLHWDKWGT3"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const auth = firebase.auth();
+    // --- Elements ---
+    const signInBtn = document.getElementById('signInBtn');
+    const signOutBtn = document.getElementById('signOutBtn');
+    const makeBtn = document.getElementById('makeBtn');
+    const testBtn = document.getElementById('testBtn');
+    const analyticsBtn = document.getElementById('analyticsBtn');
+    const app = document.getElementById('app');
 
-  const provider = new firebase.auth.GoogleAuthProvider();
+    // --- State ---
+    let userId = null;
+    let flashcardSets = {};
+    let currentSet = null;
+    let currentSetName = null;
+    let currentIndex = 0;
+    let score = 0;
+    let timer = 0;
+    let timerId = null;
+    let timeLeft = 0;
+    let showAnswer = false;
+    let answerStatusArr = [];
+    let scoreEnabled = true;
+    let prevCardIndex = 0;
 
-  let flashcardSets = {};
-  let userId = null;
-
-  const app = document.getElementById('app');
-  const makeBtn = document.getElementById('makeBtn');
-  const testBtn = document.getElementById('testBtn');
-  const analyticsBtn = document.getElementById('analyticsBtn');
-  const signInBtn = document.getElementById('signInBtn');
-  const signOutBtn = document.getElementById('signOutBtn');
-
-  // Google Sign In
-  async function signInWithGoogle() {
-    try {
-      const result = await auth.signInWithPopup(provider);
-      userId = result.user.uid;
-      await loadFlashcardSetsFromFirebase();
-      enableAppFeatures(true);
-      showSetTiles();
-      console.log("Signed in as", result.user.email);
-    } catch (err) {
-      console.error("Google sign-in failed", err);
-      alert("Failed to sign in: " + err.message);
+    // --- Auth and UI Controls ---
+    function enableControls(enabled) {
+      makeBtn.disabled = testBtn.disabled = analyticsBtn.disabled = !enabled;
+      signInBtn.style.display = enabled ? 'none' : 'inline-block';
+      signOutBtn.style.display = enabled ? 'inline-block' : 'none';
     }
-  }
 
-  // Sign Out
-  async function signOutUser() {
-    await auth.signOut();
-    userId = null;
-    flashcardSets = {};
-    enableAppFeatures(false);
-    app.innerHTML = "<p style='color:#ffaa33;text-align:center;'>You are signed out. Please sign in to use the app.</p>";
-  }
+    signInBtn.onclick = async () => {
+      try {
+        await auth.signInWithPopup(provider);
+      } catch (error) {
+        alert("Sign-in failed: " + error.message);
+      }
+    };
 
-  // Enable or disable main app buttons based on auth
-  function enableAppFeatures(enabled) {
-    makeBtn.disabled = !enabled;
-    testBtn.disabled = !enabled;
-    analyticsBtn.disabled = !enabled;
-    signInBtn.style.display = enabled ? 'none' : 'inline-block';
-    signOutBtn.style.display = enabled ? 'inline-block' : 'none';
-  }
+    signOutBtn.onclick = async () => {
+      await auth.signOut();
+    };
 
-  signInBtn.onclick = signInWithGoogle;
-  signOutBtn.onclick = signOutUser;
-
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      userId = user.uid;
-      await loadFlashcardSetsFromFirebase();
-      enableAppFeatures(true);
-      showSetTiles();
-      console.log(`User signed in: ${user.email || user.uid}`);
-    } else {
-      userId = null;
-      flashcardSets = {};
-      enableAppFeatures(false);
-      app.innerHTML = "<p style='color:#ffaa33;text-align:center;'>Please sign in to get started.</p>";
-      console.log("No user signed in");
-    }
-  });
-
-  async function loadFlashcardSetsFromFirebase() {
-    if (!userId) return;
-    const ref = db.collection("users").doc(userId).collection("sets");
-    const snap = await ref.get();
-    flashcardSets = {};
-    snap.forEach(doc => {
-      flashcardSets[doc.id] = doc.data().cards;
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        userId = user.uid;
+        await loadFlashcardSets();
+        enableControls(true);
+        showSets();
+      } else {
+        userId = null;
+        flashcardSets = {};
+        enableControls(false);
+        app.innerHTML = "<p style='color:var(--orange);text-align:center;margin-top:30px;'>Please sign in to start.</p>";
+      }
     });
-  }
 
-  async function saveFlashcardSetToFirebase(setName, cards) {
-    if (!userId) throw new Error("Not authenticated");
-    const ref = db.collection("users").doc(userId).collection("sets").doc(setName);
-    await ref.set({ cards });
-    flashcardSets[setName] = cards;
-  }
-
-  async function deleteFlashcardSetFromFirebase(setName) {
-    if (!userId) throw new Error("Not authenticated");
-    await db.collection("users").doc(userId).collection("sets").doc(setName).delete();
-    delete flashcardSets[setName];
-  }
-
-  // The rest of your app code (UI logic, event handlers etc.) goes below,
-  // unchanged except that save/delete now use Firebase async functions.
-
-  let currentSet = null, currentSetName = null;
-  let currentIndex = 0, showAnswer = false, answerStatusArr = [];
-  let score = 0, timer = 0, timerId = null, timeLeft = 0;
-
-  document.getElementById('makeBtn').onclick = showCreateUI;
-  document.getElementById('testBtn').onclick = showSetTiles;
-  document.getElementById('analyticsBtn').onclick = showCalendarAnalytics;
-
-  async function showCreateUI() {
-    app.innerHTML = `
-      <form class="form-box" id="createForm">
-      <h3 style="color:var(--orange);text-align:center;margin-bottom:0.3em;">Create Flashcards</h3>
-      <textarea id="q" required rows="2" placeholder="Enter question..."></textarea>
-      <textarea id="a" required rows="2" placeholder="Enter answer..."></textarea>
-      <div>
-      <button class="mini-btn" type="button" id="addCardBtn">Add Card</button>
-      <button class="mini-btn" type="button" id="finishBtn">Finish & Save Set</button>
-      <button class="mini-btn" type="button" id="cancelBtn" style="background:#242627;color:#f5d76e;font-weight:500;margin-left:8px;">Cancel</button>
-      </div>
-      <div id="setPreview" style="margin-top:1.4em;"></div>
-      </form>
-    `;
-    let cards = [];
-    const qEl = document.getElementById('q');
-    const aEl = document.getElementById('a');
-    document.getElementById('addCardBtn').onclick = () => {
-      const q = qEl.value.trim();
-      const a = aEl.value.trim();
-      if (q && a) {
-        cards.push({ q, a });
-        renderPreview();
-        qEl.value = '';
-        aEl.value = '';
-        qEl.focus();
-      }
-    };
-    document.getElementById('finishBtn').onclick = async () => {
-      if (cards.length) {
-        const name = prompt('Set a name for this flashcard set:');
-        if (name && !flashcardSets[name]) {
-          try {
-            await saveFlashcardSetToFirebase(name, cards);
-            alert("✅ Flashcard set saved to Firebase.");
-            app.innerHTML = `<div style="color:var(--orange);font-weight:600;">✅ Flashcard set "<b>${name}</b>" saved!</div>`;
-            saveVisitAnalytics();
-          } catch (error) {
-            alert("Error saving set: " + error.message);
-          }
-        } else {
-          alert('Set name is required and must be unique!');
-        }
-      }
-    };
-    document.getElementById('cancelBtn').onclick = () => { app.innerHTML = ""; };
-    function renderPreview() {
-      const el = document.getElementById('setPreview');
-      el.innerHTML = cards.map((c, i) => `<div style="color:var(--accent);margin-bottom:2px;">${i + 1}) Q: ${c.q}<br><span style="color:var(--yellow)">A: ${c.a}</span></div>`).join('');
+    // --- Firestore Ops ---
+    async function loadFlashcardSets() {
+      if (!userId) return;
+      const snap = await db.collection('users').doc(userId).collection('sets').get();
+      flashcardSets = {};
+      snap.forEach(doc => {
+        flashcardSets[doc.id] = doc.data().cards;
+      });
     }
-  }
+    async function saveFlashcardSet(name, cards) {
+      if (!userId) throw new Error("Not authenticated");
+      await db.collection('users').doc(userId).collection('sets').doc(name).set({ cards });
+      flashcardSets[name] = cards;
+    }
+    async function deleteFlashcardSet(name) {
+      if (!userId) throw new Error("Not authenticated");
+      await db.collection('users').doc(userId).collection('sets').doc(name).delete();
+      delete flashcardSets[name];
+    }
 
-  function showSetTiles() {
-    let isCombineMode = false;
-
-    async function renderTiles() {
-      if (Object.keys(flashcardSets).length === 0) {
-        app.innerHTML = '<div style="margin-top:35px;font-weight:600;color:#fbbd47;">No sets! Create one first.</div>';
+    // --- UI ---
+    function showSets() {
+      if (!flashcardSets || Object.keys(flashcardSets).length === 0) {
+        app.innerHTML = "<p style='color:var(--orange);text-align:center;margin-top:30px;'>No flashcard sets yet. Create one!</p>";
         return;
       }
-
-      let html = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h3 style="color:var(--yellow);margin-bottom:13px;">${isCombineMode ? "Select Sets to Combine" : "Choose a Flashcard Set"}</h3>
-          <button class="mini-btn" id="toggleCombine">${isCombineMode ? "❌ Cancel" : "📦 Combine Sets"}</button>
-        </div>
-        <form id="combineForm">
-          <div class="set-tiles">
-      `;
-
-      for (const [name, set] of Object.entries(flashcardSets)) {
-        let previewQ = set[0]?.q || 'No preview';
-        if (previewQ.length > 55) previewQ = previewQ.slice(0, 52) + '...';
-
-        html += `<div class="tile" data-set="${name}" tabindex="0">`;
-
-        if (isCombineMode) {
-          html += `<input type="checkbox" name="combine" value="${name}" style="margin-right:6px; transform: scale(1.3); vertical-align: middle;"> `;
-        }
-
-        html += `
+      let html = '<div class="set-tiles">';
+      for (const [name, cards] of Object.entries(flashcardSets)) {
+        let preview = cards.length && cards[0]?.q ? cards[0].q : '';
+        if (preview.length > 40) preview = preview.slice(0, 37) + '...';
+        html += `<div class="tile" tabindex="0" data-name="${name}">
           <strong>${name}</strong>
-          <div class="tile-preview">${previewQ}</div>
-          <button class="delete-btn" onclick="event.stopPropagation();deleteSet('${name}')">Delete</button>
+          <div class="tile-preview">${preview}</div>
+          <button class="delete-btn" onclick="event.stopPropagation();handleDelete('${name}')">Delete</button>
         </div>`;
       }
-
-      html += `</div>`;
-
-      if (isCombineMode) {
-        html += `
-          <div style="margin-top: 1.5rem;">
-            <button type="button" class="btn" id="combineNowBtn">➕ Combine Selected Sets</button>
-          </div>
-        `;
-      }
-
-      html += `</form>`;
+      html += '</div>';
       app.innerHTML = html;
+      document.querySelectorAll('.tile').forEach(tile => tile.onclick = () => selectSet(tile.dataset.name));
+    }
+    async function handleDelete(name) {
+      if (confirm(`Delete flashcard set "${name}"?`)) {
+        try {
+          await deleteFlashcardSet(name);
+          await loadFlashcardSets();
+          showSets();
+        } catch (e) {
+          alert('Error deleting set: ' + e.message);
+        }
+      }
+    }
 
-      document.getElementById('toggleCombine').onclick = () => {
-        isCombineMode = !isCombineMode;
-        renderTiles();
+    function showCreateUI() {
+      app.innerHTML = `
+        <form id="createForm" class="form-box" autocomplete="off" spellcheck="false">
+          <h3 style="margin-bottom:10px;">Create New Flashcards</h3>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <textarea id="q" required rows="2" placeholder="Enter question..." style="max-width:100%;word-break:break-word;"></textarea>
+            <textarea id="a" required rows="2" placeholder="Enter answer..." style="max-width:100%;word-break:break-word;"></textarea>
+          </div>
+          <div style="display:flex;justify-content:center;gap:14px;">
+            <button type="button" id="addCardBtn" class="mini-btn">Add Card</button>
+            <button type="button" id="finishBtn" class="mini-btn">Finish & Save</button>
+            <button type="button" id="cancelBtn" class="mini-btn" style="background:var(--danger);">Cancel</button>
+          </div>
+          <div id="setPreview" style="margin-top:20px;max-height:215px;overflow-y:auto;"></div>
+        </form>
+      `;
+      const qEl = document.getElementById('q');
+      const aEl = document.getElementById('a');
+      let cards = [];
+      document.getElementById('addCardBtn').onclick = () => {
+        const q = qEl.value.trim();
+        const a = aEl.value.trim();
+        if (q && a) {
+          cards.push({ q, a });
+          renderPreview();
+          qEl.value = '';
+          aEl.value = '';
+          qEl.focus();
+        }
       };
-
-      if (isCombineMode) {
-        document.getElementById("combineNowBtn").onclick = async () => {
-          const checked = [...document.querySelectorAll('input[name="combine"]:checked')];
-          if (checked.length < 2) {
-            alert("Select at least 2 sets to combine.");
-            return;
-          }
-
-          const names = checked.map(cb => cb.value);
-          let combinedCards = names.flatMap(name => flashcardSets[name]);
-
-          const newName = prompt("Enter name for the combined set:");
-          if (!newName || flashcardSets[newName]) {
-            alert("Invalid or duplicate name.");
-            return;
-          }
-
-          try {
-            await saveFlashcardSetToFirebase(newName, combinedCards);
-            for (const name of names) {
-              await deleteFlashcardSetFromFirebase(name);
-            }
-            alert(`✅ "${newName}" created.`);
-            isCombineMode = false;
-            await loadFlashcardSetsFromFirebase();
-            renderTiles();
-          } catch (error) {
-            alert("Error combining sets: " + error.message);
-          }
-        };
-      } else {
-        Array.from(document.getElementsByClassName("tile")).forEach(tile => {
-          const setName = tile.getAttribute("data-set");
-          tile.onclick = () => selectSet(setName);
-        });
-      }
-    }
-
-    renderTiles();
-  }
-
-  window.deleteSet = async function(name) {
-    if (confirm(`Delete flashcard set "${name}"?`)) {
-      try {
-        await deleteFlashcardSetFromFirebase(name);
-        alert(`🗑️ Set "${name}" deleted.`);
-        await loadFlashcardSetsFromFirebase();
-        showSetTiles();
-      } catch (error) {
-        alert("Error deleting set: " + error.message);
-      }
-    }
-  };
-
-  function selectSet(name) {
-    saveVisitAnalytics();
-    currentSetName = name;
-    currentSet = flashcardSets[name];
-    currentIndex = 0;
-    showAnswer = false;
-    answerStatusArr = Array(currentSet.length).fill(null); // null = not answered
-    score = 0;
-    let inp = prompt('Enter timer (minutes, 0 = untimed):');
-    let mins = Math.max(0, parseInt(inp || '0'));
-    if (timerId) clearInterval(timerId);
-    timeLeft = timer = mins > 0 ? mins * 60 : 0;
-    if (timer > 0) {
-      timerId = setInterval(() => {
-        timeLeft--;
-        let bar = document.getElementById('scorebarline');
-        if (bar) bar.innerText = `Score: ${score} | Time: ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} | ${currentIndex + 1}/${currentSet.length}`;
-        if (timeLeft <= 0) {
-          clearInterval(timerId);
-          alert(`⏰ Time's up! Final Score: ${score}/${currentSet.length}`);
-          showSetTiles();
+      document.getElementById('finishBtn').onclick = async () => {
+        if (cards.length === 0) {
+          alert('Please add at least one card.');
+          return;
         }
-      }, 1000);
+        const name = prompt('Enter a name for this flashcard set:');
+        if (!name || name.trim() === '') return;
+        if (flashcardSets[name]) {
+          alert('Flashcard set name already exists!');
+          return;
+        }
+        try {
+          await saveFlashcardSet(name, cards);
+          alert(`Flashcard set "${name}" saved.`);
+          saveVisitAnalytics();
+          showSets();
+        } catch (e) {
+          alert('Error saving set: ' + e.message);
+        }
+      };
+      document.getElementById('cancelBtn').onclick = () => { showSets(); };
+      function renderPreview() {
+        const previewEl = document.getElementById('setPreview');
+        previewEl.innerHTML = cards.map((card, i) => `<div><strong>${i + 1}.</strong> Q: ${card.q}<br>A: ${card.a}</div>`).join('<hr style="border-color:#444;margin:8px 0;">');
+      }
     }
-    renderCard('right');
-  }
 
-  function renderCard(direction) {
-    app.innerHTML = `
-      <div class="card-shell">
-        <div class="top-progress" id="prog">${currentIndex + 1} / ${currentSet.length}</div>
-        <div class="card${showAnswer ? ' flipped' : ''}" id="flashcard"
-          tabindex="0"
-          style="animation:${direction == 'left' ? 'slideInLeft' : 'slideInRight'} 0.43s;">
-          ${showAnswer ? currentSet[currentIndex].a : currentSet[currentIndex].q}
+    // Test flow
+    function selectSet(name) {
+      currentSetName = name;
+      currentSet = flashcardSets[name];
+      currentIndex = 0;
+      score = 0;
+      showAnswer = false;
+      answerStatusArr = Array(currentSet.length).fill(null);
+      app.innerHTML = `
+        <div class="form-box" style="max-width:98vw;">
+          <h3 style='margin-bottom:10px;font-size:1.18rem;color:var(--accent)'>Test Options</h3>
+          <label style="display:flex;align-items:center; font-size:1rem; gap:8px; margin-bottom:12px;">
+            <input type="checkbox" id="scoreBox" checked style="accent-color: var(--accent); transform:scale(1.22);" />
+            <span>Keep score during test</span>
+          </label>
+          <label style="display:flex;align-items:center; font-size:1rem; gap:8px;">
+            <span style="margin-right:8px;">Timer (minutes, 0 for untimed):</span>
+            <input type="number" id="timerInput" min="0" max="600" value="0" style="width:66px;" />
+          </label>
+          <div style="margin-top:17px;">
+            <button class="mini-btn" id="startTestBtn">Start Test</button>
+            <button class="mini-btn endBtn" id="cancelTestBtn">Cancel</button>
+          </div>
         </div>
-      </div>
-      <div class="nav-panel">
-        <button class="mini-btn" id="prevBtn" ${currentIndex === 0 ? "disabled" : ""}>Previous</button>
-        <button class="mini-btn" id="flipBtn">${showAnswer ? "Hide Answer" : "Show Answer"}</button>
-        <button class="mini-btn" id="nextBtn" ${currentIndex === currentSet.length - 1 ? "disabled" : ""}>Next</button>
-        <button class="mini-btn endBtn" id="endBtn">End Test</button>
-      </div>
-      <div class="score-bar" id="scorebarline">
-        Score: ${score}${timer > 0 ? ` | Time: ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}` : ""} | ${currentIndex + 1}/${currentSet.length}
-      </div>
-    `;
-    document.getElementById('prevBtn').onclick = () => navTo('prev');
-    document.getElementById('nextBtn').onclick = () => navTo('next');
-    document.getElementById('flipBtn').onclick = () => {
-      showAnswer = !showAnswer;
-      renderCard();
-    };
-    document.getElementById('flashcard').onclick = () => {
-      showAnswer = !showAnswer;
-      renderCard();
-    };
-    document.getElementById('endBtn').onclick = endTest;
-  }
+      `;
+      document.getElementById('startTestBtn').onclick = () => {
+        scoreEnabled = document.getElementById('scoreBox').checked;
+        let timerMins = parseInt(document.getElementById('timerInput').value) || 0;
+        timer = timeLeft = timerMins > 0 ? timerMins * 60 : 0;
+        if (timerId) clearInterval(timerId);
+        if (timer > 0) {
+          timerId = setInterval(() => {
+            timeLeft--;
+            updateScoreTimer();
+            if (timeLeft <= 0) {
+              clearInterval(timerId);
+              alert(`Time's up! Your score: ${score} / ${currentSet.length}`);
+              showSets();
+            }
+          }, 1000);
+        }
+        renderCard();
+      };
+      document.getElementById('cancelTestBtn').onclick = showSets;
+    }
 
-  function endTest() {
-    if (timerId) clearInterval(timerId);
-    alert(`Test ended! Final Score: ${score}/${currentSet.length}`);
-    showSetTiles();
-  }
+    function updateScoreTimer() {
+      const el = document.getElementById('scoreTimer');
+      if (el) {
+        let scoreText = scoreEnabled ? `Score: ${score} ` : '';
+        let timerText = timer > 0 ? `| Time Left: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}` : '';
+        el.textContent = `${scoreText}${timerText} | Card ${currentIndex + 1} / ${currentSet.length}`;
+      }
+    }
 
-  function navTo(way) {
-    if (way === 'next') {
-      if (answerStatusArr[currentIndex] === null) {
-        if (showAnswer) {
-          answerStatusArr[currentIndex] = false;
-        } else {
-          const correct = confirm("✅ Did you answer correctly?");
-          if (correct) score++;
-          answerStatusArr[currentIndex] = correct ? true : false;
+    // Render card with slide animation
+    function renderCard(direction='right') {
+      const cardShell = document.querySelector('.card-shell');
+      if (cardShell && direction && typeof prevCardIndex === 'number' && prevCardIndex !== currentIndex) {
+        let prevCard = document.querySelector('.card');
+        if (prevCard) {
+          prevCard.classList.add('slide-out');
+          setTimeout(() => {
+            doRenderCard(direction);
+          }, 370);
+          return;
         }
       }
-      if (currentIndex < currentSet.length - 1) {
-        currentIndex++;
-        showAnswer = false;
-        renderCard('right');
-      }
+      doRenderCard(direction);
+      prevCardIndex = currentIndex;
     }
-    if (way === 'prev') {
-      if (currentIndex > 0) {
-        currentIndex--;
-        showAnswer = false;
-        renderCard('left');
-      }
+    function doRenderCard(direction) {
+      const animClass = 'slide-in';
+      const cardData = currentSet[currentIndex];
+      app.innerHTML = `
+        <div class="card-shell">
+          <div class="top-progress" aria-live="polite" aria-atomic="true">
+            Card ${currentIndex + 1} / ${currentSet.length}
+          </div>
+          <div class="card${showAnswer ? ' flipped' : ''} ${animClass}" tabindex="0" aria-pressed="${showAnswer}" aria-label="${showAnswer?'Answer':'Question'}">
+            ${showAnswer ? cardData.a : cardData.q}
+          </div>
+          <div class="nav-panel" aria-label="Navigation buttons">
+            <button class="mini-btn" id="prev" ${currentIndex === 0 ? 'disabled' : ''}>Previous</button>
+            <button class="mini-btn" id="flip">${showAnswer ? 'Hide Answer' : 'Show Answer'}</button>
+            <button class="mini-btn" id="next" ${currentIndex === currentSet.length - 1 ? 'disabled' : ''}>Next</button>
+            <button class="mini-btn endBtn" id="end">End Test</button>
+          </div>
+          <div id="scoreTimer" class="score-bar" aria-live="polite" aria-atomic="true"></div>
+        </div>
+      `;
+      document.getElementById('flip').onclick = () => { showAnswer = !showAnswer; renderCard(); };
+      document.getElementById('prev').onclick = () => {
+        if (currentIndex > 0) {
+          prevCardIndex = currentIndex;
+          currentIndex--; showAnswer = false; renderCard('left');
+        }
+      };
+      document.getElementById('next').onclick = () => {
+        if (scoreEnabled && answerStatusArr[currentIndex] === null) {
+          if (showAnswer) {
+            answerStatusArr[currentIndex] = false;
+          } else {
+            const correct = confirm('✅ Did you answer correctly?');
+            if (correct) score++;
+            answerStatusArr[currentIndex] = !!correct;
+          }
+        }
+        if (currentIndex < currentSet.length - 1) {
+          prevCardIndex = currentIndex;
+          currentIndex++; showAnswer = false; renderCard('right');
+        }
+      };
+      document.getElementById('end').onclick = () => {
+        if (scoreEnabled && answerStatusArr[currentIndex] === null) {
+          if (showAnswer) answerStatusArr[currentIndex] = false;
+          else {
+            const correct = confirm('✅ For this card, did you answer correctly?');
+            if (correct) score++;
+            answerStatusArr[currentIndex] = !!correct;
+          }
+        }
+        if (timerId) clearInterval(timerId);
+        let finalScore = scoreEnabled ? `Your score: ${score} / ${currentSet.length}` : '';
+        alert(`Test ended! ${finalScore}`);
+        showSets();
+      };
+      document.querySelector('.card').onclick = () => { showAnswer = !showAnswer; renderCard(); };
+      updateScoreTimer();
     }
-  }
 
-  // Analytics calendar view
-  function showCalendarAnalytics() {
-    let vis = JSON.parse(localStorage.getItem('fcVisits') || "{}");
-    let now = new Date();
-    let monthsArr = [];
-    for (let k = 1; k <= 2; ++k) {
-      let y = now.getFullYear(), m = now.getMonth() - k + 1;
-      if (m < 0) { m += 12; y--; }
-      monthsArr.push({ y, m });
-    }
-    let html = `<div class="calendar-box"><div class="calendar-hdr">App Usage Analytics (past 2 months):</div>`;
-    monthsArr.forEach(({ y, m }) => {
-      let ref = new Date(y, m, 1);
-      let label = ref.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-      html += `<div style="color:var(--yellow);font-weight:700;margin:15px auto 4px auto;text-align:left">${label}</div>`;
-      html += `<div class="calendar-grid cal-mg">`;
-      ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => { html += `<span class="calday cal-empty" style="color:#555;">${d}</span>`; });
-      let start = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
-      for (let i = 0; i < start; ++i) html += `<span class="calday cal-empty"></span>`;
-      for (let d = 1; d <= days; ++d) {
-        let id = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        let isActive = vis[id] ? 1 : 0, isToday = (id === new Date().toISOString().slice(0, 10));
-        html += `<span class="calday ${isActive ? 'cal-active' : 'cal-inactive'}${isToday ? ' cal-today' : ''}">${d}</span>`;
+    // Analytics calendar view
+    function showCalendarAnalytics() {
+      let vis = JSON.parse(localStorage.getItem('fcVisits') || "{}");
+      let now = new Date();
+      let monthsArr = [];
+      for (let k = 1; k <= 2; ++k) {
+        let y = now.getFullYear(), m = now.getMonth() - k + 1;
+        if (m < 0) { m += 12; y--; }
+        monthsArr.push({ y, m });
       }
-      html += `</div>`;
+      let html = `<div class="form-box" style="margin-bottom:0;"><div style="font-weight:700;color:var(--accent);font-size:1.18rem;margin-bottom:18px;">App Usage Analytics <span style="font-size:1.02rem;font-weight:400;color:var(--orange);">(last 2 months)</span></div>`;
+      monthsArr.forEach(({ y, m }) => {
+        let ref = new Date(y, m, 1);
+        let label = ref.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+        html += `<div style="color:var(--yellow);font-weight:600;margin:15px auto 4px auto;text-align:left">${label}</div>`;
+        html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">`;
+        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => { html += `<span style="width:28px;color:#555;font-size:.98em;text-align:center;">${d}</span>`; });
+        let start = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+        for (let i = 0; i < start; ++i) html += `<span style="width:28px;"></span>`;
+        for (let d = 1; d <= days; ++d) {
+          let id = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          let isActive = vis[id] ? 1 : 0, isToday = (id === new Date().toISOString().slice(0, 10));
+          let calStyle = `width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;`;
+          if (isActive) calStyle += `background:var(--accent);color:#181300;`;
+          else calStyle += `background:#23252a;color:#555;`;
+          if (isToday) calStyle += `box-shadow:0 0 0 2.5px var(--yellow);font-weight:700;`;
+          html += `<span style="${calStyle}">${d}</span>`;
+        }
+        html += `</div>`;
+      });
+      html += `<div style="color:#f5d76e;font-size:.97rem;margin-top:12px;text-align:center;">Yellow days = days you used the app<br>Gray = inactive days</div></div>`;
+      app.innerHTML = html;
+    }
+
+    // Save visit analytics for usage tracking
+    function saveVisitAnalytics() {
+      const vis = JSON.parse(localStorage.getItem('fcVisits') || '{}');
+      vis[new Date().toISOString().slice(0, 10)] = 1;
+      localStorage.setItem('fcVisits', JSON.stringify(vis));
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function (e) {
+      if (app.childElementCount === 0) return;
+      if (["ArrowRight"].includes(e.key)) document.getElementById('nextBtn')?.click();
+      if (["ArrowLeft"].includes(e.key)) document.getElementById('prevBtn')?.click();
+      if (e.key === " " || e.key === "Enter") document.getElementById('flipBtn')?.click();
     });
-    html += `<div style="color:#f5d76e;font-size:.98rem;margin-top:16px;">Yellow days = days you used the app<br>Black/grey = days inactive</div></div>`;
-    app.innerHTML = html;
-  }
 
-  // Keyboard shortcuts (power users)
-  document.addEventListener('keydown', function (e) {
-    if (app.childElementCount === 0) return;
-    if (["ArrowRight"].includes(e.key)) document.getElementById('nextBtn')?.click();
-    if (["ArrowLeft"].includes(e.key)) document.getElementById('prevBtn')?.click();
-    if (e.key === " " || e.key === "Enter") document.getElementById('flipBtn')?.click();
-  });
-</script>
+    // Initial visit analytics
+    saveVisitAnalytics();
+
+    // Buttons initial wiring
+    testBtn.onclick = showSets;
+    makeBtn.onclick = showCreateUI;
+    analyticsBtn.onclick = showCalendarAnalytics;
+  </script>
 </body>
 </html>
