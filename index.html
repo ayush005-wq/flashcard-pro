@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#ffaa33" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('service-worker.js').then(() => {
+        console.log('Service Worker Registered');
+      }).catch(console.error);
+    }
+  </script>
+
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flashcard Trainer Pro</title>
+  <style>
+    /* Your existing CSS styles unchanged except for these additions */
+    /* ... (your existing styles here) ... */
+    .auth-btns-container {
+      margin-bottom: 15px;
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div class="main-wrap">
+    <h1>Flashcard Trainer Pro</h1>
+    <div class="auth-btns-container">
+      <button class="btn" id="signInBtn">Sign In with Google</button>
+      <button class="btn" id="signOutBtn" style="display:none;">Sign Out</button>
+    </div>
+    <div class="button-group" id="mainButtons">
+      <button class="btn" id="makeBtn" disabled>Make Flashcards</button>
+      <button class="btn" id="testBtn" disabled>Take Test</button>
+      <button class="btn" id="analyticsBtn" disabled>Analytics</button>
+    </div>
+    <div id="app"></div>
+  </div>
+
+<script>
+  // Firebase config and initialization
+  const firebaseConfig = {
+    apiKey: "AIzaSyDBQZZerHyXkYm-dww6Sqs60P1-y9Yz2yE",
+    authDomain: "flashcard-trainer-pro.firebaseapp.com",
+    projectId: "flashcard-trainer-pro",
+    storageBucket: "flashcard-trainer-pro.firebasestorage.app",
+    messagingSenderId: "766758365393",
+    appId: "1:766758365393:web:df70ae93689ad7c917fdf0",
+    measurementId: "G-TLHWDKWGT3"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+
+  const provider = new firebase.auth.GoogleAuthProvider();
+
+  let flashcardSets = {};
+  let userId = null;
+
+  const app = document.getElementById('app');
+  const makeBtn = document.getElementById('makeBtn');
+  const testBtn = document.getElementById('testBtn');
+  const analyticsBtn = document.getElementById('analyticsBtn');
+  const signInBtn = document.getElementById('signInBtn');
+  const signOutBtn = document.getElementById('signOutBtn');
+
+  // Google Sign In
+  async function signInWithGoogle() {
+    try {
+      const result = await auth.signInWithPopup(provider);
+      userId = result.user.uid;
+      await loadFlashcardSetsFromFirebase();
+      enableAppFeatures(true);
+      showSetTiles();
+      console.log("Signed in as", result.user.email);
+    } catch (err) {
+      console.error("Google sign-in failed", err);
+      alert("Failed to sign in: " + err.message);
+    }
+  }
+
+  // Sign Out
+  async function signOutUser() {
+    await auth.signOut();
+    userId = null;
+    flashcardSets = {};
+    enableAppFeatures(false);
+    app.innerHTML = "<p style='color:#ffaa33;text-align:center;'>You are signed out. Please sign in to use the app.</p>";
+  }
+
+  // Enable or disable main app buttons based on auth
+  function enableAppFeatures(enabled) {
+    makeBtn.disabled = !enabled;
+    testBtn.disabled = !enabled;
+    analyticsBtn.disabled = !enabled;
+    signInBtn.style.display = enabled ? 'none' : 'inline-block';
+    signOutBtn.style.display = enabled ? 'inline-block' : 'none';
+  }
+
+  signInBtn.onclick = signInWithGoogle;
+  signOutBtn.onclick = signOutUser;
+
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      userId = user.uid;
+      await loadFlashcardSetsFromFirebase();
+      enableAppFeatures(true);
+      showSetTiles();
+      console.log(`User signed in: ${user.email || user.uid}`);
+    } else {
+      userId = null;
+      flashcardSets = {};
+      enableAppFeatures(false);
+      app.innerHTML = "<p style='color:#ffaa33;text-align:center;'>Please sign in to get started.</p>";
+      console.log("No user signed in");
+    }
+  });
+
+  async function loadFlashcardSetsFromFirebase() {
+    if (!userId) return;
+    const ref = db.collection("users").doc(userId).collection("sets");
+    const snap = await ref.get();
+    flashcardSets = {};
+    snap.forEach(doc => {
+      flashcardSets[doc.id] = doc.data().cards;
+    });
+  }
+
+  async function saveFlashcardSetToFirebase(setName, cards) {
+    if (!userId) throw new Error("Not authenticated");
+    const ref = db.collection("users").doc(userId).collection("sets").doc(setName);
+    await ref.set({ cards });
+    flashcardSets[setName] = cards;
+  }
+
+  async function deleteFlashcardSetFromFirebase(setName) {
+    if (!userId) throw new Error("Not authenticated");
+    await db.collection("users").doc(userId).collection("sets").doc(setName).delete();
+    delete flashcardSets[setName];
+  }
+
+  // The rest of your app code (UI logic, event handlers etc.) goes below,
+  // unchanged except that save/delete now use Firebase async functions.
+
+  let currentSet = null, currentSetName = null;
+  let currentIndex = 0, showAnswer = false, answerStatusArr = [];
+  let score = 0, timer = 0, timerId = null, timeLeft = 0;
+
+  document.getElementById('makeBtn').onclick = showCreateUI;
+  document.getElementById('testBtn').onclick = showSetTiles;
+  document.getElementById('analyticsBtn').onclick = showCalendarAnalytics;
+
+  async function showCreateUI() {
+    app.innerHTML = `
+      <form class="form-box" id="createForm">
+      <h3 style="color:var(--orange);text-align:center;margin-bottom:0.3em;">Create Flashcards</h3>
+      <textarea id="q" required rows="2" placeholder="Enter question..."></textarea>
+      <textarea id="a" required rows="2" placeholder="Enter answer..."></textarea>
+      <div>
+      <button class="mini-btn" type="button" id="addCardBtn">Add Card</button>
+      <button class="mini-btn" type="button" id="finishBtn">Finish & Save Set</button>
+      <button class="mini-btn" type="button" id="cancelBtn" style="background:#242627;color:#f5d76e;font-weight:500;margin-left:8px;">Cancel</button>
+      </div>
+      <div id="setPreview" style="margin-top:1.4em;"></div>
+      </form>
+    `;
+    let cards = [];
+    const qEl = document.getElementById('q');
+    const aEl = document.getElementById('a');
+    document.getElementById('addCardBtn').onclick = () => {
+      const q = qEl.value.trim();
+      const a = aEl.value.trim();
+      if (q && a) {
+        cards.push({ q, a });
+        renderPreview();
+        qEl.value = '';
+        aEl.value = '';
+        qEl.focus();
+      }
+    };
+    document.getElementById('finishBtn').onclick = async () => {
+      if (cards.length) {
+        const name = prompt('Set a name for this flashcard set:');
+        if (name && !flashcardSets[name]) {
+          try {
+            await saveFlashcardSetToFirebase(name, cards);
+            alert("✅ Flashcard set saved to Firebase.");
+            app.innerHTML = `<div style="color:var(--orange);font-weight:600;">✅ Flashcard set "<b>${name}</b>" saved!</div>`;
+            saveVisitAnalytics();
+          } catch (error) {
+            alert("Error saving set: " + error.message);
+          }
+        } else {
+          alert('Set name is required and must be unique!');
+        }
+      }
+    };
+    document.getElementById('cancelBtn').onclick = () => { app.innerHTML = ""; };
+    function renderPreview() {
+      const el = document.getElementById('setPreview');
+      el.innerHTML = cards.map((c, i) => `<div style="color:var(--accent);margin-bottom:2px;">${i + 1}) Q: ${c.q}<br><span style="color:var(--yellow)">A: ${c.a}</span></div>`).join('');
+    }
+  }
+
+  function showSetTiles() {
+    let isCombineMode = false;
+
+    async function renderTiles() {
+      if (Object.keys(flashcardSets).length === 0) {
+        app.innerHTML = '<div style="margin-top:35px;font-weight:600;color:#fbbd47;">No sets! Create one first.</div>';
+        return;
+      }
+
+      let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="color:var(--yellow);margin-bottom:13px;">${isCombineMode ? "Select Sets to Combine" : "Choose a Flashcard Set"}</h3>
+          <button class="mini-btn" id="toggleCombine">${isCombineMode ? "❌ Cancel" : "📦 Combine Sets"}</button>
+        </div>
+        <form id="combineForm">
+          <div class="set-tiles">
+      `;
+
+      for (const [name, set] of Object.entries(flashcardSets)) {
+        let previewQ = set[0]?.q || 'No preview';
+        if (previewQ.length > 55) previewQ = previewQ.slice(0, 52) + '...';
+
+        html += `<div class="tile" data-set="${name}" tabindex="0">`;
+
+        if (isCombineMode) {
+          html += `<input type="checkbox" name="combine" value="${name}" style="margin-right:6px; transform: scale(1.3); vertical-align: middle;"> `;
+        }
+
+        html += `
+          <strong>${name}</strong>
+          <div class="tile-preview">${previewQ}</div>
+          <button class="delete-btn" onclick="event.stopPropagation();deleteSet('${name}')">Delete</button>
+        </div>`;
+      }
+
+      html += `</div>`;
+
+      if (isCombineMode) {
+        html += `
+          <div style="margin-top: 1.5rem;">
+            <button type="button" class="btn" id="combineNowBtn">➕ Combine Selected Sets</button>
+          </div>
+        `;
+      }
+
+      html += `</form>`;
+      app.innerHTML = html;
+
+      document.getElementById('toggleCombine').onclick = () => {
+        isCombineMode = !isCombineMode;
+        renderTiles();
+      };
+
+      if (isCombineMode) {
+        document.getElementById("combineNowBtn").onclick = async () => {
+          const checked = [...document.querySelectorAll('input[name="combine"]:checked')];
+          if (checked.length < 2) {
+            alert("Select at least 2 sets to combine.");
+            return;
+          }
+
+          const names = checked.map(cb => cb.value);
+          let combinedCards = names.flatMap(name => flashcardSets[name]);
+
+          const newName = prompt("Enter name for the combined set:");
+          if (!newName || flashcardSets[newName]) {
+            alert("Invalid or duplicate name.");
+            return;
+          }
+
+          try {
+            await saveFlashcardSetToFirebase(newName, combinedCards);
+            for (const name of names) {
+              await deleteFlashcardSetFromFirebase(name);
+            }
+            alert(`✅ "${newName}" created.`);
+            isCombineMode = false;
+            await loadFlashcardSetsFromFirebase();
+            renderTiles();
+          } catch (error) {
+            alert("Error combining sets: " + error.message);
+          }
+        };
+      } else {
+        Array.from(document.getElementsByClassName("tile")).forEach(tile => {
+          const setName = tile.getAttribute("data-set");
+          tile.onclick = () => selectSet(setName);
+        });
+      }
+    }
+
+    renderTiles();
+  }
+
+  window.deleteSet = async function(name) {
+    if (confirm(`Delete flashcard set "${name}"?`)) {
+      try {
+        await deleteFlashcardSetFromFirebase(name);
+        alert(`🗑️ Set "${name}" deleted.`);
+        await loadFlashcardSetsFromFirebase();
+        showSetTiles();
+      } catch (error) {
+        alert("Error deleting set: " + error.message);
+      }
+    }
+  };
+
+  function selectSet(name) {
+    saveVisitAnalytics();
+    currentSetName = name;
+    currentSet = flashcardSets[name];
+    currentIndex = 0;
+    showAnswer = false;
+    answerStatusArr = Array(currentSet.length).fill(null); // null = not answered
+    score = 0;
+    let inp = prompt('Enter timer (minutes, 0 = untimed):');
+    let mins = Math.max(0, parseInt(inp || '0'));
+    if (timerId) clearInterval(timerId);
+    timeLeft = timer = mins > 0 ? mins * 60 : 0;
+    if (timer > 0) {
+      timerId = setInterval(() => {
+        timeLeft--;
+        let bar = document.getElementById('scorebarline');
+        if (bar) bar.innerText = `Score: ${score} | Time: ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')} | ${currentIndex + 1}/${currentSet.length}`;
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          alert(`⏰ Time's up! Final Score: ${score}/${currentSet.length}`);
+          showSetTiles();
+        }
+      }, 1000);
+    }
+    renderCard('right');
+  }
+
+  function renderCard(direction) {
+    app.innerHTML = `
+      <div class="card-shell">
+        <div class="top-progress" id="prog">${currentIndex + 1} / ${currentSet.length}</div>
+        <div class="card${showAnswer ? ' flipped' : ''}" id="flashcard"
+          tabindex="0"
+          style="animation:${direction == 'left' ? 'slideInLeft' : 'slideInRight'} 0.43s;">
+          ${showAnswer ? currentSet[currentIndex].a : currentSet[currentIndex].q}
+        </div>
+      </div>
+      <div class="nav-panel">
+        <button class="mini-btn" id="prevBtn" ${currentIndex === 0 ? "disabled" : ""}>Previous</button>
+        <button class="mini-btn" id="flipBtn">${showAnswer ? "Hide Answer" : "Show Answer"}</button>
+        <button class="mini-btn" id="nextBtn" ${currentIndex === currentSet.length - 1 ? "disabled" : ""}>Next</button>
+        <button class="mini-btn endBtn" id="endBtn">End Test</button>
+      </div>
+      <div class="score-bar" id="scorebarline">
+        Score: ${score}${timer > 0 ? ` | Time: ${Math.floor(timeLeft / 60)}:${String(timeLeft % 60).padStart(2, '0')}` : ""} | ${currentIndex + 1}/${currentSet.length}
+      </div>
+    `;
+    document.getElementById('prevBtn').onclick = () => navTo('prev');
+    document.getElementById('nextBtn').onclick = () => navTo('next');
+    document.getElementById('flipBtn').onclick = () => {
+      showAnswer = !showAnswer;
+      renderCard();
+    };
+    document.getElementById('flashcard').onclick = () => {
+      showAnswer = !showAnswer;
+      renderCard();
+    };
+    document.getElementById('endBtn').onclick = endTest;
+  }
+
+  function endTest() {
+    if (timerId) clearInterval(timerId);
+    alert(`Test ended! Final Score: ${score}/${currentSet.length}`);
+    showSetTiles();
+  }
+
+  function navTo(way) {
+    if (way === 'next') {
+      if (answerStatusArr[currentIndex] === null) {
+        if (showAnswer) {
+          answerStatusArr[currentIndex] = false;
+        } else {
+          const correct = confirm("✅ Did you answer correctly?");
+          if (correct) score++;
+          answerStatusArr[currentIndex] = correct ? true : false;
+        }
+      }
+      if (currentIndex < currentSet.length - 1) {
+        currentIndex++;
+        showAnswer = false;
+        renderCard('right');
+      }
+    }
+    if (way === 'prev') {
+      if (currentIndex > 0) {
+        currentIndex--;
+        showAnswer = false;
+        renderCard('left');
+      }
+    }
+  }
+
+  // Analytics calendar view
+  function showCalendarAnalytics() {
+    let vis = JSON.parse(localStorage.getItem('fcVisits') || "{}");
+    let now = new Date();
+    let monthsArr = [];
+    for (let k = 1; k <= 2; ++k) {
+      let y = now.getFullYear(), m = now.getMonth() - k + 1;
+      if (m < 0) { m += 12; y--; }
+      monthsArr.push({ y, m });
+    }
+    let html = `<div class="calendar-box"><div class="calendar-hdr">App Usage Analytics (past 2 months):</div>`;
+    monthsArr.forEach(({ y, m }) => {
+      let ref = new Date(y, m, 1);
+      let label = ref.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+      html += `<div style="color:var(--yellow);font-weight:700;margin:15px auto 4px auto;text-align:left">${label}</div>`;
+      html += `<div class="calendar-grid cal-mg">`;
+      ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => { html += `<span class="calday cal-empty" style="color:#555;">${d}</span>`; });
+      let start = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+      for (let i = 0; i < start; ++i) html += `<span class="calday cal-empty"></span>`;
+      for (let d = 1; d <= days; ++d) {
+        let id = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        let isActive = vis[id] ? 1 : 0, isToday = (id === new Date().toISOString().slice(0, 10));
+        html += `<span class="calday ${isActive ? 'cal-active' : 'cal-inactive'}${isToday ? ' cal-today' : ''}">${d}</span>`;
+      }
+      html += `</div>`;
+    });
+    html += `<div style="color:#f5d76e;font-size:.98rem;margin-top:16px;">Yellow days = days you used the app<br>Black/grey = days inactive</div></div>`;
+    app.innerHTML = html;
+  }
+
+  // Keyboard shortcuts (power users)
+  document.addEventListener('keydown', function (e) {
+    if (app.childElementCount === 0) return;
+    if (["ArrowRight"].includes(e.key)) document.getElementById('nextBtn')?.click();
+    if (["ArrowLeft"].includes(e.key)) document.getElementById('prevBtn')?.click();
+    if (e.key === " " || e.key === "Enter") document.getElementById('flipBtn')?.click();
+  });
+</script>
+</body>
+</html>
