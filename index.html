@@ -1,648 +1,2704 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Flashcard Trainer Pro</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#ffaa33" />
-  <style>
-    :root {
-      --bg: #111316;
-      --flashcard-bg: #24282a;
-      --tile-bg: #191f26e0;
-      --tile-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 1.5px 8px #ffb35210;
-      --card-shadow: 0 14px 32px rgba(0,0,0,0.37), 0 4px 48px 2px #ffc52319;
-      --yellow: #f5d76e;
-      --orange: #ffaa33;
-      --accent: #ffb300;
-      --danger: #e75746;
-      --border: 2.2px solid #30343c70;
-      --active: #a1aefedd;
-      --card-radius: 21px;
-    }
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      background: var(--bg);
-      color: var(--yellow);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      min-width: 100vw; min-height: 100vh;
-      box-sizing: border-box;
-    }
-    body { display: flex; flex-direction: column; align-items: center; }
-    .main-wrap {
-      min-height: 100vh;
-      min-width: 100vw;
-      width: 100vw;
-      box-sizing: border-box;
-      padding: 18px 4vw;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: var(--bg);
-      max-width: 440px;
-      margin: 0 auto;
-    }
-    h1 {
-      color: var(--accent);
-      margin-bottom: 22px;
-      font-weight: 800;
-      font-size: 2.22rem;
-      letter-spacing: 1px;
-      text-shadow: 0 0 8px #000c;
-      text-align: center;
-      width: 100%;
-    }
-    .auth-buttons {
-      margin-bottom: 18px;
-      width: 100%;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 16px;
-    }
-    .auth-buttons .btn {
-      background: linear-gradient(90deg, #ffaa33, #ffbf40);
-      color: #1b1300;
-      font-weight: 700;
-      border-radius: 24px;
-      padding: 13px 32px;
-      border: none;
-      cursor: pointer;
-      font-size: 1.13rem;
-      box-shadow: 0 0 18px 4px #ffdab359, 0 2px 16px #2824147a;
-      text-align: center;
-      min-width: 172px;
-      transition: background 0.28s, color 0.21s, box-shadow 0.25s;
-      border: var(--border);
-      user-select: auto;
-    }
-    .auth-buttons .btn:hover, .auth-buttons .btn:focus { 
-      background: linear-gradient(90deg, #ffd54f, #ffeb83); 
-      color: #2e2a1b; 
-      outline: none;
-    }
-    .button-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 17px;
-      margin-bottom: 26px;
-      justify-content: center;
-      width: 100%;
-    }
-    .btn {
-      background: linear-gradient(93deg, #ffaa33, #ffc622 70%);
-      border: none;
-      color: #292312;
-      font-weight: 700;
-      border-radius: 17px;
-      padding: 0.8rem 2.3rem;
-      font-size: 1.11rem;
-      cursor: pointer;
-      box-shadow: 0 3px 14px #20285d30, 0 0.5px 4px #00000012;
-      border: var(--border);
-      transition: background .2s, color .19s, box-shadow .16s;
-      user-select: none;
-      min-width: 130px;
-      text-align: center;
-    }
-    .btn:disabled { opacity: 0.44; filter: grayscale(60%); cursor: not-allowed;}
-    .btn:hover, .btn:focus-visible { background: linear-gradient(93deg, #495cff, #ffc815 89%); color: #fff;}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E📚%3C/text%3E%3C/svg%3E">
 
-    /* Tiles and card styling */
-    .set-tiles {
-      display: flex; flex-wrap: wrap; gap: 23px 16px; justify-content: center;
-      width: 100%; max-width: 520px; margin: 0 auto;
-    }
-    .tile {
-      position: relative;
-      width: 230px; min-height: 100px;
-      border-radius: var(--card-radius);
-      background: var(--tile-bg);
-      box-shadow: var(--tile-shadow);
-      padding: 1.13rem 1.26rem .9rem 1.23rem;
-      border: var(--border);
-      margin: 0 auto 10px auto;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      cursor: pointer; color: var(--yellow);
-      backdrop-filter: blur(2.5px);
-      transition: background .2s, box-shadow .15s;
-      z-index: 1;
-      user-select: none;
-    }
-    .tile:hover, .tile:focus-visible {
-      background: #232738d6;
-      box-shadow: 0 14px 36px 7px #f2be4b24, 0 2px 10px #0002;
-      outline: 2.5px solid var(--accent);
-      outline-offset: 1.5px;
-    }
-    .tile strong {
-      font-size: 1.17rem; font-weight: 620; color: var(--accent);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      margin-bottom: 5px; letter-spacing: .08em;
-      user-select: text;
-    }
-    .tile-preview {
-      color: var(--orange); font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
-      user-select: text;
-    }
-    .tile .delete-btn {
-      position: absolute; right: 14px; bottom: 9px; background: var(--danger);
-      border-radius: 16px; padding: 4px 11px; font-size: .86rem; font-weight: 600; border: none; color: white; cursor: pointer; transition: background .18s;
-      border: var(--border);
-      z-index: 3;
-      user-select: none;
-    }
-    .tile .delete-btn:hover { background: #ff433a;}
-    .tile input[type='checkbox'] { accent-color: var(--accent); margin-right: 8px; transform: scale(1.18); cursor: pointer; user-select: auto;}
-    .form-box {
-      background: #1d2630e3;
-      padding: 25px 16px;
-      border-radius: 22px;
-      box-shadow: 0 7px 15px #0007, 0 2.5px 18px #f8c63f13;
-      color: var(--yellow);
-      margin: 0 auto 32px auto;
-      width: 100%; max-width: 410px;
-      border: var(--border);
-      box-sizing: border-box;
-      user-select: none;
-    }
-    textarea, input[type='text'], input[type='number'] {
-      background: #181a20e6;
-      border: 1.8px solid #3b4750;
-      border-radius: 14px;
-      padding: 12px 16px;
-      font-size: 1.12rem;
-      color: var(--yellow);
-      width: 100%; min-width: 0;
-      max-width: 100%;
-      min-height: 52px;
-      resize: vertical;
-      font-weight: 500;
-      box-sizing: border-box;
-      transition: border-color .23s, background .2s;
-    }
-    textarea:focus, input:focus {
-      background: #22272e;
-      border-color: var(--accent);
-      outline: none;
-    }
 
-    .card-shell {
-      width: 99vw; max-width: 410px; min-height: 170px;
-      margin: 20px auto 8px auto;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-    }
-    .top-progress { color: var(--yellow); font-size: 1.12rem; font-weight: 600; letter-spacing: .09em; padding-left: 5px; margin-bottom: 14px;}
-    .card {
-      background: var(--flashcard-bg); border-radius: 21px;
-      box-shadow: var(--card-shadow);
-      border: var(--border);
-      font-size: 1.26rem;
-      min-height: 115px; width: 100%;
-      padding: 22px 19px;
-      color: var(--yellow);
-      cursor: pointer; user-select: none; text-align: center;
-      overflow-wrap: break-word;
-      transition: background 0.17s, box-shadow 0.22s, color 0.15s;
-      margin-bottom: 12px;
-      will-change: transform, opacity;
-      z-index: 2;
-    }
-    .card.flipped {
-      background: #394822;
-      color: var(--orange);
-    }
-    /* Slide animations */
-    @keyframes slideInRight {
-      0% {transform:translateX(110vw);opacity: 0;}
-      90% {opacity: 1;}
-      100% {transform:translateX(0);}
-    }
-    @keyframes slideOutLeft {
-      0% {transform:translateX(0);opacity: 1;}
-      100% {transform:translateX(-110vw); opacity:0;}
-    }
-    /* Animate on card change with class .slide-in or .slide-out */
-    .slide-in { animation: slideInRight 0.44s cubic-bezier(.87,0,.18,1) both;}
-    .slide-out { animation: slideOutLeft 0.39s cubic-bezier(.77,0,.24,1) both;}
-    .nav-panel { display: flex; justify-content: space-between; gap: 13px; flex-wrap: wrap; margin-bottom: 10px;}
-    .mini-btn {
-      flex-grow: 1; min-width: 82px; padding: 8px 15px;
-      border-radius: 16px; background: linear-gradient(93deg, #495cff 0%, #ffb300 100%);
-      border: none; color: white; font-weight: 700; font-size: 1.04rem; cursor: pointer; margin-bottom: 3px;
-      transition: background 0.16s;
-    }
-    .mini-btn:disabled { opacity: .5; filter: grayscale(.3); cursor: not-allowed; }
-    .endBtn { background: var(--danger) !important; }
-    .score-bar {
-      font-weight: 700; color: var(--orange); font-size: 1.08rem;
-      margin-bottom: 8px; margin-top: 3px; text-align:center; letter-spacing: .03em;
-    }
-    @media (max-width: 650px) {
-      .main-wrap {padding: 11px;}
-      .tile {width: 97vw !important; min-width: 0;}
-      .form-box, .card-shell {padding: 8px 0;}
-      .card {font-size: 1.07rem; min-height: 80px;}
-      button {font-size:1rem;}
-      .set-tiles {padding:0 4px;}
-    }
-    @media (min-width:651px) and (max-width:1024px){
-      .tile {width: 47vw !important; max-width:330px;}
-      .card-shell,.form-box{max-width:370px;}
-    }
-  </style>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<title>Flashcard Trainer Pro</title>
+
+<!-- Firebase compat -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+  --bg-1:#071012; --bg-2:#0f1315;
+  --muted:#9aa0a4; --accent:#ffb300; --accent-2:#ffaa33;
+  --danger:#ff6b6b; --glass: rgba(255,255,255,0.03);
+  --card-radius:14px;
+  --easy-color:#4CAF50;
+  --medium-color:#FF9800;
+  --hard-color:#F44336;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#f6e9c7;font-family:Inter,system-ui,Segoe UI,Arial;scroll-behavior:smooth}
+/* Better spacing and rhythm */
+.container {
+  max-width: 1200px; /* Slightly wider for better use of space */
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Subtle background texture */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(255,179,0,0.02) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(255,179,0,0.01) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Better focus states for accessibility */
+button:focus, input:focus, textarea:focus, select:focus {
+  outline: 2px solid rgba(255,179,0,0.5);
+  outline-offset: 2px;
+}
+
+h1{margin:0;text-align:center;color:var(--accent);font-weight:900}
+
+/* Loading spinner */
+.loading-spinner {
+  width: 20px; height: 20px; border: 2px solid var(--glass);
+  border-top: 2px solid var(--accent); border-radius: 50%;
+  animation: spin 1s linear infinite; display: inline-block;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Enhanced animation keyframes */
+@keyframes slideInRight {
+  from {
+    transform: translateX(110%) rotateY(10deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0) rotateY(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutLeft {
+  from {
+    transform: translateX(0) rotateY(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-110%) rotateY(-10deg);
+    opacity: 0;
+  }
+}
+
+@keyframes flipToBack {
+  0% {
+    transform: rotateY(0deg) scale(1);
+  }
+  50% {
+    transform: rotateY(90deg) scale(1.05);
+  }
+  100% {
+    transform: rotateY(180deg) scale(1);
+  }
+}
+@keyframes flipToFront {
+  0% {
+    transform: rotateY(180deg) scale(1);
+  }
+  50% {
+    transform: rotateY(90deg) scale(1.05);
+  }
+  100% {
+    transform: rotateY(0deg) scale(1);
+  }
+}
+.top-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.top-left{display:flex;flex-direction:column;gap:6px}
+.small-muted{font-size:.92rem;color:var(--muted)}
+.auth-buttons{display:flex;gap:10px;align-items:center}
+.btn {
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  border: none;
+  color: #1b1300;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 
+    0 4px 16px rgba(255,179,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.3);
+  transition: all 0.2s ease;
+  position: relative;
+}
+.btn:focus{outline:2px solid var(--accent)}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 24px rgba(255,179,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.btn.ghost {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: #f6e9c7;
+  box-shadow: 
+    0 4px 16px rgba(0,0,0,0.2),
+    inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.btn.ghost:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,179,0,0.3);
+  color: var(--accent);
+}
+.btn.danger{background:linear-gradient(90deg,#ff7a6b,#ffb48f);color:#2b0f09}
+.chip{background:#0d0f10;padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.03);font-size:.92rem}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:12px;background:rgba(255,255,255,0.02);border-radius:10px;padding:4px}
+.tab{padding:8px 16px;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--muted);font-weight:600}
+.tab.active{background:var(--accent);color:#1b1300}
+.tab:hover:not(.active){background:rgba(255,255,255,0.05)}
+
+
+/* layout */
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px;margin-top:6px}
+@media(max-width:980px){.grid{grid-template-columns:1fr}}
+
+.panel {
+  background: linear-gradient(145deg, rgba(255,255,255,0.04), rgba(0,0,0,0.2));
+  border-radius: var(--card-radius);
+  padding: 18px;
+  box-shadow: 
+    0 8px 32px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    0 1px 0 rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 48px rgba(0,0,0,0.8),
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 1px 0 rgba(255,255,255,0.05);
+  border-color: rgba(255,179,0,0.15);
+}
+
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+.sets-list{display:flex;flex-direction:column;gap:14px;margin-top:12px;max-height:70vh;overflow:auto;padding-right:6px}
+.tile {
+  background: linear-gradient(145deg, rgba(255,255,255,0.03), rgba(0,0,0,0.15));
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.04);
+  box-shadow: 
+    0 8px 24px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  position: relative;
+}
+
+.tile:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 
+    0 16px 48px rgba(0,0,0,0.7),
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 0 0 1px rgba(255,179,0,0.2);
+  background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(0,0,0,0.1));
+}
+.title{display:flex;justify-content:space-between;align-items:center;gap:8px;font-weight:800;color:var(--accent)}
+.preview{color:var(--muted);margin-top:6px;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+
+/* Category chips */
+.category-chip{background:var(--accent);color:#1b1300;padding:4px 8px;border-radius:16px;font-size:0.8rem;font-weight:600;margin:2px}
+.category-chip.reports{background:#e91e63}
+.category-chip.economics{background:#2196f3}
+.category-chip.finance{background:#4caf50}
+.category-chip.rbi{background:#ff5722}
+.category-chip.sebi{background:#9c27b0}
+.category-chip.others{background:#607d8b}
+
+/* Difficulty indicators */
+.diff-indicator{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.diff-easy{background:var(--easy-color)}
+.diff-medium{background:var(--medium-color)}
+.diff-hard{background:var(--hard-color)}
+
+/* work area */
+.work-area{display:flex;flex-direction:column;gap:12px}
+.card-area{display:flex;align-items:center;justify-content:center;min-height:240px}
+/* Fixed size cards with scrollable content */
+.card-wrap {
+  perspective: 1600px;
+  width: 100%;
+  max-width: 760px;
+  height: 280px; /* ✅ FIXED HEIGHT */
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.card {
+  width: 100%;
+  height: 280px; /* ✅ FIXED HEIGHT - same as wrapper */
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a1d1f, #0f1214);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.12rem;
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-style: preserve-3d;
+  transition: all 0.6s cubic-bezier(0.2, 0.9, 0.3, 1);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.card:hover {
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+  border-color: rgba(255,179,0,0.2);
+}
+
+.card-face {
+  position: absolute;
+  inset: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+   flex-direction: column;
+  padding: 40px 20px 20px 20px;
+  overflow: hidden; /* ✅ Prevent face overflow */
+}
+/* Card entrance animations */
+.card.slide-in-right {
+  animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card.slide-out-left {
+  animation: slideOutLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Improved card transitions */
+.card {
+  transition: all 0.3s ease;
+}
+
+/* Button hover animations */
+.btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+/* Ensure text doesn't overlap with controls */
+.question-text, .answer-text {
+  width: 100%;
+  max-height: 180px; /* ✅ FIXED MAX HEIGHT */
+  overflow-y: auto; /* ✅ ENABLE SCROLLING */
+  text-align: center;
+  line-height: 1.5;
+  word-wrap: break-word;
+  padding: 8px;
+  margin-top: 10px;
+}
+
+/* Custom scrollbar for card content */
+.question-text::-webkit-scrollbar,
+.answer-text::-webkit-scrollbar {
+  width: 6px;
+}
+
+.question-text::-webkit-scrollbar-track,
+.answer-text::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.1);
+  border-radius: 3px;
+}
+
+.question-text::-webkit-scrollbar-thumb,
+.answer-text::-webkit-scrollbar-thumb {
+  background: rgba(255,179,0,0.4);
+  border-radius: 3px;
+}
+
+.question-text::-webkit-scrollbar-thumb:hover,
+.answer-text::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,179,0,0.6);
+}
+
+.front{transform:rotateY(0)}
+.back{transform:rotateY(180deg);color:var(--accent-2)}
+.rotate-in { transform: rotateY(0deg); }
+.rotate-out { transform: rotateY(180deg); }
+
+/* Notes functionality */
+.notes-icon {
+  position: absolute;
+  top: 8px; /* ✅ Moved higher */
+  right: 50px; /* ✅ Moved left to avoid bookmark */
+  background: rgba(0,0,0,0.6); /* ✅ Darker background */
+  border: none;
+  border-radius: 50%;
+  width: 32px; /* ✅ Slightly smaller */
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 14px; /* ✅ Smaller font */
+  transition: all 0.2s;
+  z-index: 10; /* ✅ Ensure it's above text */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.notes-icon:hover {
+  background: rgba(0,0,0,0.8);
+  transform: scale(1.1);
+}
+.notes-display {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+  font-size: 0.9rem;
+  color: var(--muted);
+  max-height: 60px; /* ✅ FIXED HEIGHT FOR NOTES */
+  overflow-y: auto; /* ✅ SCROLLABLE NOTES */
+  width: 100%;
+}
+
+.notes-display::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notes-display::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+}
+
+.notes-display::-webkit-scrollbar-thumb {
+  background: rgba(255,179,0,0.3);
+  border-radius: 2px;
+}
+/* Bookmark functionality */
+.bookmark-btn {
+  position: absolute;
+  top: 8px; /* ✅ Moved higher */
+  right: 8px; /* ✅ Moved to right edge */
+  background: none;
+  border: none;
+  font-size: 20px; /* ✅ Slightly smaller */
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666;
+  z-index: 10; /* ✅ Ensure it's above text */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.bookmark-btn:hover {
+  transform: scale(1.2);
+}
+
+.bookmark-btn.bookmarked {
+  color: var(--accent);
+}
+/* Difficulty selector */
+.difficulty-selector {
+  position: absolute;
+  top: 8px; /* ✅ Moved higher */
+  left: 8px; /* ✅ Moved to left edge */
+  background: rgba(0,0,0,0.7); /* ✅ Darker background */
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px; /* ✅ Smaller font */
+  cursor: pointer;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  z-index: 10; /* ✅ Ensure it's above text */
+}
+
+.difficulty-selector:hover {
+  background: rgba(0,0,0,0.8);
+  transform: scale(1.05);
+}
+
+.difficulty-selector.easy {
+  border-left: 3px solid var(--easy-color);
+}
+.difficulty-selector.medium {
+  border-left: 3px solid var(--medium-color);
+}
+.difficulty-selector.hard {
+  border-left: 3px solid var(--hard-color);
+}
+
+/* swipe/slide */
+.slide-out-left { transform: translateX(-110%) rotateY(-4deg); opacity: 0; }
+.slide-in-right { transform: translateX(110%); opacity: 0; }
+.slide-active { transform: translateX(0); opacity: 1; transition: transform .42s cubic-bezier(.87,0,.18,1), opacity .22s; }
+
+/* progress and controls */
+.meta-row{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.nav{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
+.settings{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.timer-ring{width:56px;height:56px;display:inline-grid;place-items:center;border-radius:50%;background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,0.03) 0deg);box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);transition:background 0.3s ease}
+.score-box{font-weight:800;color:var(--accent-2)}
+
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+@media(max-width:900px){.charts{grid-template-columns:1fr}}
+
+.analytics-tile{min-height:320px;width:100%}
+.list{max-height:320px;overflow:auto;padding:6px;border-radius:10px;background:rgba(255,255,255,0.01);border:1px solid rgba(255,255,255,0.02)}
+.cal-rect{width:100%;padding:6px;background:#0b0d0e;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
+
+/* Add this to your <style> section */
+
+/* Better chart containers */
+.analytics-tile {
+  min-height: 320px;
+  width: 100%;
+  padding: 12px; /* Reduced padding for more chart space */
+}
+
+.analytics-tile > div:first-child {
+  margin-bottom: 6px; /* Reduced margin for title */
+}
+
+/* Chart canvas sizing */
+#accuracyChart, #timeChart {
+  max-height: 280px !important; /* Ensure charts don't overflow */
+}
+
+/* Weak areas */
+.weak-areas{max-height:400px;overflow-y:auto}
+.weak-item{padding:12px;margin:4px 0;background:rgba(255,107,107,0.1);border-left:4px solid var(--danger);border-radius:8px}
+.weak-item-question{font-weight:700;color:#fff;margin-bottom:6px}
+.weak-item-stats{font-size:0.85rem;color:var(--muted)}
+
+/* calendar grid */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal-cell{height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.9rem;color:#666;background:#0b0d0e;box-shadow:inset 0 -2px 4px rgba(0,0,0,0.7);transition:all 0.2s ease}
+.cal-cell.active{background:linear-gradient(90deg,var(--accent-2),var(--accent));color:#191300; box-shadow:0 10px 26px rgba(255,179,0,0.06)}
+.cal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+
+/* modal */
+.modal-back{position:fixed;inset:0;background:rgba(2,4,6,0.8);display:flex;align-items:center;justify-content:center;z-index:9999;backdrop-filter:blur(4px)}
+.modal{background:linear-gradient(180deg,#0f1416,#161b1d);padding:18px;border-radius:12px;min-width:300px;max-width:780px;border:1px solid rgba(255,255,255,0.04);box-shadow:0 20px 60px rgba(0,0,0,0.8)}
+.modal h3{margin:0;color:var(--accent)}
+.modal .controls{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
+input[type='text'], input[type='number'], textarea, select{background:#0b0d0e;border:1px solid rgba(255,255,255,0.03);color:#f6e9c7;padding:8px;border-radius:8px;width:100%;transition:all 0.2s ease}
+input:focus, textarea:focus, select:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 2px rgba(255,179,0,0.2)}
+label{color:var(--muted)}
+.hidden{display:none!important}
+
+/* Search box */
+.search-box{width:100%;margin-bottom:12px;position:relative}
+.search-box input{padding-left:35px}
+.search-box::before{content:'🔍';position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;z-index:1}
+
+/* Category view */
+/* Fixed category headers with scrollable content */
+.category-section {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  overflow: hidden;
+}
+
+.category-header {
+  font-weight: 700;
+  color: var(--accent);
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(255,179,0,0.1), rgba(255,179,0,0.05));
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+}
+
+.category-cards {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  max-height: 300px; /* ✅ Fixed height for scrolling */
+  overflow-y: auto; /* ✅ Enable vertical scrolling */
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar for category cards */
+.category-cards::-webkit-scrollbar {
+  width: 6px;
+}
+
+.category-cards::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 3px;
+}
+
+.category-cards::-webkit-scrollbar-thumb {
+  background: rgba(255,179,0,0.3);
+  border-radius: 3px;
+}
+
+.category-cards::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,179,0,0.5);
+}
+
+.category-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.1));
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.category-card:hover {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(0,0,0,0.05));
+  border-left-color: var(--accent-2);
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+/* Categories content wrapper */
+#categoriesContent {
+  max-height: 75vh; /* ✅ Limit total height */
+  overflow-y: auto; /* ✅ Enable scrolling for entire categories view */
+}
+
+/* Custom scrollbar for categories content */
+#categoriesContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+#categoriesContent::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.05);
+  border-radius: 4px;
+}
+
+#categoriesContent::-webkit-scrollbar-thumb {
+  background: rgba(255,179,0,0.4);
+  border-radius: 4px;
+}
+
+#categoriesContent::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,179,0,0.6);
+}
+
+/* Quiz mode */
+.quiz-settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:12px 0}
+.category-selector{display:flex;flex-direction:column;gap:8px}
+.category-count{display:flex;justify-content:space-between;align-items:center;padding:8px;background:rgba(255,255,255,0.05);border-radius:6px}
+
+/* responsive tweaks */
+@media(max-width:560px){
+  .top-left{align-items:center}
+  .tile{padding:10px}
+  .card {font-size:1rem;padding:12px}
+  .cal-cell{height:30px;font-size:.82rem}
+  .tabs{flex-wrap:wrap}
+}
+</style>
 </head>
 <body>
-  <div class="main-wrap">
+  <div class="container">
     <h1>Flashcard Trainer Pro</h1>
-    <div class="auth-buttons">
-      <button class="btn" id="signInBtn" type="button">Sign In with Google</button>
-      <button class="btn" id="signOutBtn" style="display:none;" type="button">Sign Out</button>
+
+    <div class="top-bar">
+      <div class="top-left">
+        <div class="small-muted">
+          Banking Current Affairs — upgraded study analytics
+          <span id="streakDisplay" style="margin-left:10px;color:var(--accent)"></span>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap">
+          <div style="font-weight:800;color:var(--accent)">Your flashcard sets</div>
+          <div id="userEmail" class="chip">Not signed in</div>
+        </div>
+      </div>
+
+      <div class="auth-buttons">
+        <button id="signInBtn" class="btn">Sign in with Google</button>
+        <button id="signOutBtn" class="btn ghost" style="display:none">Sign Out</button>
+      </div>
     </div>
-    <div class="button-group">
-      <button class="btn" id="makeBtn" disabled type="button">Make Flashcards</button>
-      <button class="btn" id="testBtn" disabled type="button">Take Test</button>
-      <button class="btn" id="analyticsBtn" disabled type="button">Analytics</button>
+
+    <div class="grid">
+      <!-- left: sets -->
+      <div class="panel">
+        <div class="tabs">
+          <div class="tab active" data-tab="sets">Sets</div>
+          <div class="tab" data-tab="categories">Categories</div>
+        </div>
+
+        <div id="setsTab">
+          <div class="controls">
+            <button id="createSetBtn" class="btn">Create Set</button>
+            <button id="importBtn" class="btn ghost">Import JSON</button>
+            <button id="exportBtn" class="btn ghost">Export JSON</button>
+            <button id="categorizeBtn" class="btn ghost">Categorize</button>
+            <button id="analyticsBtn" class="btn ghost" disabled>Analytics</button>
+          </div>
+
+          <div style="margin-top:12px;">
+            <div class="search-box">
+              <input type="text" id="searchSets" placeholder="Search sets and cards...">
+            </div>
+            <div class="small-muted">Your flashcard sets</div>
+          </div>
+
+          <div class="sets-list panel" id="setsList" style="margin-top:12px"></div>
+        </div>
+
+        <div id="categoriesTab" style="display:none">
+          <div class="controls">
+            <button id="quizModeBtn" class="btn">Quiz Mode</button>
+            <button id="refreshCategoriesBtn" class="btn ghost">Refresh</button>
+          </div>
+          <div id="categoriesContent" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <!-- right: work & analytics -->
+      <div class="work-area">
+        <div class="panel" id="workPanel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="meta-row" style="gap:12px">
+              <div class="chip" id="currentSetTitle">No set selected</div>
+              <div class="small-muted" id="setStats"></div>
+            </div>
+
+            <div class="settings">
+              <label class="flex small-muted"><input type="checkbox" id="shuffleChk"> Shuffle</label>
+              <label class="flex small-muted"><input type="checkbox" id="srChk"> Spaced repetition</label>
+              <label class="flex small-muted"><input type="checkbox" id="scoreChk" checked> Score</label>
+              <button id="startTestBtn" class="btn" disabled>Start Test</button>
+            </div>
+          </div>
+
+          <div class="card-area" style="margin-top:12px">
+            <div style="width:100%;max-width:760px">
+              <div id="cardProgress" style="text-align:right;color:var(--muted);font-weight:700;margin-bottom:8px"></div>
+              <div class="card-wrap" id="cardWrap"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;flex-wrap:wrap">
+            <div class="nav" id="testNav" style="display:none">
+              <button id="prevBtn" class="btn ghost">Previous</button>
+              <button id="flipBtn" class="btn">Flip</button>
+              <button id="nextBtn" class="btn ghost">Next</button>
+              <button id="endBtn" class="btn danger">End Test</button>
+            </div>
+
+            <div class="flex" id="timerAndScore" style="display:none;align-items:center">
+              <div class="timer-ring" id="timerRing"></div>
+              <div style="margin-left:8px;text-align:right">
+                <div class="small-muted">Score</div>
+                <div id="scoreLabel" class="score-box">0 / 0</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:16px;font-size:0.85rem;color:var(--muted);text-align:center">
+            <div>⌨️ Keyboard shortcuts: Space/↑ (Flip) | ← → (Navigate) | 1 (Wrong) | 2 (Correct)</div>
+          </div>
+        </div>
+
+        <div class="panel" id="analyticsPanel" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+            <div style="font-weight:800;color:var(--accent)">Analytics</div>
+            <div class="small-muted">Personalized to your Google account</div>
+          </div>
+
+          <div style="margin-top:12px" class="charts">
+            <div class="panel analytics-tile">
+              <div style="font-weight:700;color:var(--accent);margin-bottom:8px">Accuracy over time</div>
+              <canvas id="accuracyChart" height="220"></canvas>
+            </div>
+            <div class="panel analytics-tile">
+              <div style="font-weight:700;color:var(--accent);margin-bottom:8px">Time spent per attempt (mins)</div>
+              <canvas id="timeChart" height="220"></canvas>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+            <div style="flex:1" class="panel">
+              <div style="font-weight:700;color:var(--accent);margin-bottom:6px">Weak Areas (sorted by mistake rate)</div>
+              <div id="weakAreas" class="weak-areas">Loading...</div>
+            </div>
+            <div style="flex:1" class="panel">
+              <div style="font-weight:700;color:var(--accent);margin-bottom:6px">Mastered sets (last 3 attempts ≥85%)</div>
+              <div id="masteredSets" class="list small-muted">Loading...</div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px">
+            <div style="font-weight:700;color:var(--accent);margin-bottom:6px">Activity calendar (this month)</div>
+            <div class="cal-rect">
+              <div class="cal-header" style="margin-bottom:8px">
+                <div id="calMonthLabel" class="small-muted"></div>
+                <div style="display:flex;gap:8px;align-items:center"><div style="width:12px;height:12px;border-radius:3px;background:var(--accent);"></div><div class="small-muted">Activity</div></div>
+              </div>
+              <div id="calGrid" class="cal-grid" aria-hidden="false"></div>
+            </div>
+            <div style="font-size:.92rem;color:var(--muted);margin-top:8px">Yellow = days you used the app (tests or creations). Dark = inactive days.</div>
+          </div>
+        </div>
+
+      </div>
     </div>
-    <div id="app"></div>
   </div>
-  <script>
-    // --- Firebase Config ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDBQZZerHyXkYm-dww6Sqs60P1-y9Yz2yE",
-      authDomain: "flashcard-trainer-pro.firebaseapp.com",
-      projectId: "flashcard-trainer-pro",
-      storageBucket: "flashcard-trainer-pro.appspot.com",
-      messagingSenderId: "766758365393",
-      appId: "1:766758365393:web:df70ae93689ad7c917fdf0",
-      measurementId: "G-TLHWDKWGT3"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const provider = new firebase.auth.GoogleAuthProvider();
 
-    // --- Elements ---
-    const signInBtn = document.getElementById('signInBtn');
-    const signOutBtn = document.getElementById('signOutBtn');
-    const makeBtn = document.getElementById('makeBtn');
-    const testBtn = document.getElementById('testBtn');
-    const analyticsBtn = document.getElementById('analyticsBtn');
-    const app = document.getElementById('app');
+  <!-- modal root -->
+  <div id="modalRoot" style="display:none"></div>
 
-    // --- State ---
-    let userId = null;
-    let flashcardSets = {};
-    let currentSet = null;
-    let currentSetName = null;
-    let currentIndex = 0;
-    let score = 0;
-    let timer = 0;
-    let timerId = null;
-    let timeLeft = 0;
-    let showAnswer = false;
-    let answerStatusArr = [];
-    let scoreEnabled = true;
-    let prevCardIndex = 0;
+<script>
+/* ================== Setup Firebase ================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDBQZZerHyXkYm-dww6Sqs60P1-y9Yz2yE",
+  authDomain: "flashcard-trainer-pro.firebaseapp.com",
+  projectId: "flashcard-trainer-pro",
+  storageBucket: "flashcard-trainer-pro.appspot.com",
+  messagingSenderId: "766758365393",
+  appId: "1:766758365393:web:df70ae93689ad7c917fdf0",
+  measurementId: "G-TLHWDKWGT3"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const provider = new firebase.auth.GoogleAuthProvider();
 
-    // --- Auth and UI Controls ---
-    function enableControls(enabled) {
-      makeBtn.disabled = testBtn.disabled = analyticsBtn.disabled = !enabled;
-      signInBtn.style.display = enabled ? 'none' : 'inline-block';
-      signOutBtn.style.display = enabled ? 'inline-block' : 'none';
+/* ================== OpenRouter AI Configuration ================== */
+const OPENROUTER_API_KEY = 'YOUR_OPENROUTER_API_KEY_HERE'; // Replace with your actual API key
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+
+/* ================== State & elements ================== */
+let userId = null, userEmail = null;
+let sets = {};
+let currentSetName = null;
+let playQueue = [], currentIndex = 0, inTest = false, isQuizMode = false;
+let score = 0, timeLimit = 0, timeLeft = 0, timerInterval = null;
+let answerStatus = [], mistakesCounter = {}, mistakesThisAttempt = {};
+let startTimestamp = null;
+let cardNodes = [];
+let currentSearchQuery = '';
+let activeTab = 'sets';
+
+// Spaced repetition data (SM-2 like algorithm)
+let spacedRepetitionData = {}; // cardId -> {easeFactor, interval, repetitions, lastReview}
+
+// Sound effects
+// Replace your current sounds object with this fixed version:
+const sounds = {
+  correct: (() => {
+    try {
+      return new Audio('audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAaBDuR3YzCeSQFLYPP8tiJNggZaLvt559NEAxQp+PwtmMcBjiR1/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAaBDuR3eHm05AAAAAAAAAAAAAA');
+    } catch(e) {
+      return null;
     }
+  })(),
+  wrong: (() => {
+    try {
+      return new Audio('audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAaBDuR3YzCeSQFLYPP8tiJNggZaLvt559NEAxQp+PwtmMcBjiR1/LNeSsFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAaBDuR3eHm05AAAAAAAAAAAAAA');
+    } catch(e) {
+      return null;
+    }
+  })()
+};
 
-    signInBtn.onclick = async () => {
-      try {
-        await auth.signInWithPopup(provider);
-      } catch (error) {
-        alert("Sign-in failed: " + error.message);
-      }
+
+const signInBtn = document.getElementById('signInBtn');
+const signOutBtn = document.getElementById('signOutBtn');
+const userEmailEl = document.getElementById('userEmail');
+const setsListEl = document.getElementById('setsList');
+const currentSetTitle = document.getElementById('currentSetTitle');
+const setStats = document.getElementById('setStats');
+const createSetBtn = document.getElementById('createSetBtn');
+const importBtn = document.getElementById('importBtn');
+const exportBtn = document.getElementById('exportBtn');
+const categorizeBtn = document.getElementById('categorizeBtn');
+const startTestBtn = document.getElementById('startTestBtn');
+const shuffleChk = document.getElementById('shuffleChk');
+const srChk = document.getElementById('srChk');
+const scoreChk = document.getElementById('scoreChk');
+const cardWrap = document.getElementById('cardWrap');
+const cardProgress = document.getElementById('cardProgress');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const flipBtn = document.getElementById('flipBtn');
+const endBtn = document.getElementById('endBtn');
+const testNav = document.getElementById('testNav');
+const timerAndScore = document.getElementById('timerAndScore');
+const timerRing = document.getElementById('timerRing');
+const scoreLabel = document.getElementById('scoreLabel');
+const analyticsBtn = document.getElementById('analyticsBtn');
+const analyticsPanel = document.getElementById('analyticsPanel');
+const searchSets = document.getElementById('searchSets');
+const quizModeBtn = document.getElementById('quizModeBtn');
+
+const calGrid = document.getElementById('calGrid');
+const calMonthLabel = document.getElementById('calMonthLabel');
+
+/* ================== Tab System ================== */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const tabName = tab.dataset.tab;
+    switchTab(tabName);
+  });
+});
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+  
+  document.getElementById('setsTab').style.display = tabName === 'sets' ? 'block' : 'none';
+  document.getElementById('categoriesTab').style.display = tabName === 'categories' ? 'block' : 'none';
+  
+  activeTab = tabName;
+  
+  if (tabName === 'categories') {
+    renderCategories();
+  }
+}
+
+/* ================== Auth handlers ================== */
+signInBtn.onclick = async ()=> {
+  try { await auth.signInWithPopup(provider); } catch(e){ await showModal('Sign-in failed', `<div class="small-muted">${e.message}</div>`, [{text:'OK'}]); }
+};
+signOutBtn.onclick = async ()=> { await auth.signOut(); };
+
+auth.onAuthStateChanged(async user => {
+  if (user){
+    userId = user.uid;
+    userEmail = user.email || user.displayName || 'You';
+    userEmailEl.textContent = userEmail;
+    signInBtn.style.display = 'none';
+    signOutBtn.style.display = 'inline-block';
+    analyticsBtn.disabled = false;
+    await loadUserSets();
+    await loadSpacedRepetitionData();
+    renderSets();
+    updateStudyStreak();
+    clearWorkArea();
+  } else {
+    userId = null; userEmail = null;
+    userEmailEl.textContent = 'Not signed in';
+    signInBtn.style.display = 'inline-block';
+    signOutBtn.style.display = 'none';
+    analyticsBtn.disabled = true;
+    sets = {
+      'Sample: Banking Basics': { cards:[
+        {q:'What is Repo Rate?', a:'The rate at which RBI lends to commercial banks in the short term.', tag:'medium', bookmarked:false, category:'RBI', notes:''},
+        {q:'CRR stands for?', a:'Cash Reserve Ratio', tag:'easy', bookmarked:false, category:'RBI', notes:''},
+        {q:'Inflation target?', a:'4% +/- 2%', tag:'hard', bookmarked:false, category:'Economics', notes:''}
+      ], createdAt:new Date() }
     };
+    spacedRepetitionData = {};
+    renderSets();
+    clearWorkArea();
+  }
+});
 
-    signOutBtn.onclick = async () => {
-      await auth.signOut();
-    };
+/* ================== Spaced Repetition System ================== */
+async function loadSpacedRepetitionData() {
+  if (!userId) return;
+  try {
+    const doc = await db.collection('users').doc(userId).collection('meta').doc('spacedRepetition').get();
+    spacedRepetitionData = doc.exists ? doc.data() : {};
+  } catch(e) {
+    spacedRepetitionData = {};
+  }
+}
 
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        userId = user.uid;
-        await loadFlashcardSets();
-        enableControls(true);
-        showSets();
-      } else {
-        userId = null;
-        flashcardSets = {};
-        enableControls(false);
-        app.innerHTML = "<p style='color:var(--orange);text-align:center;margin-top:30px;'>Please sign in to start.</p>";
-      }
+async function saveSpacedRepetitionData() {
+  if (!userId) return;
+  try {
+    await db.collection('users').doc(userId).collection('meta').doc('spacedRepetition').set(spacedRepetitionData);
+  } catch(e) {
+    console.warn('Failed to save spaced repetition ', e);
+  }
+}
+
+function updateSpacedRepetition(cardId, quality) {
+  // SM-2 Algorithm implementation
+  const data = spacedRepetitionData[cardId] || {
+    easeFactor: 2.5,
+    interval: 1,
+    repetitions: 0,
+    lastReview: new Date().getTime()
+  };
+
+  if (quality >= 3) { // Correct answer
+    if (data.repetitions === 0) {
+      data.interval = 1;
+    } else if (data.repetitions === 1) {
+      data.interval = 6;
+    } else {
+      data.interval = Math.round(data.interval * data.easeFactor);
+    }
+    data.repetitions++;
+  } else { // Wrong answer
+    data.repetitions = 0;
+    data.interval = 1;
+  }
+
+  data.easeFactor = Math.max(1.3, data.easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+  data.lastReview = new Date().getTime();
+  
+  spacedRepetitionData[cardId] = data;
+  saveSpacedRepetitionData();
+}
+
+function getCardDueDate(cardId) {
+  const data = spacedRepetitionData[cardId];
+  if (!data) return new Date().getTime() - 1; // Overdue if no data
+  return data.lastReview + (data.interval * 24 * 60 * 60 * 1000);
+}
+
+function isCardDue(cardId) {
+  return getCardDueDate(cardId) <= new Date().getTime();
+}
+
+/* ================== Study Streak ================== */
+function updateStudyStreak() {
+  const today = new Date().toISOString().slice(0,10);
+  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+  
+  let streak = parseInt(localStorage.getItem('fc_streak') || '0');
+  const lastStudy = localStorage.getItem('fc_last_study');
+  
+  if (lastStudy === yesterday) {
+    streak++; // Continue streak
+  } else if (lastStudy !== today) {
+    streak = 1; // Start new streak
+  }
+  
+  localStorage.setItem('fc_streak', streak);
+  localStorage.setItem('fc_last_study', today);
+  
+  // Display streak
+  const streakEl = document.getElementById('streakDisplay');
+  if (streakEl) streakEl.textContent = `🔥 ${streak} day streak`;
+}
+
+/* ================== Firestore helpers ================== */
+async function loadUserSets(){
+  if (!userId) return;
+  
+  showLoadingState('Loading sets...');
+  
+  try {
+    const snap = await db.collection('users').doc(userId).collection('sets').get();
+    sets = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      sets[doc.id] = {
+        cards: (d.cards || []).map(c=>({
+          q: c.q||'',
+          a: c.a||'',
+          tag: c.tag||'medium',
+          bookmarked: !!c.bookmarked,
+          category: c.category || 'Others',
+          notes: c.notes || ''
+        })),
+        createdAt: d.createdAt ? d.createdAt.toDate() : null
+      };
+    });
+    
+    const misSnap = await db.collection('users').doc(userId).collection('meta').doc('mistakes').get().catch(()=>null);
+    mistakesCounter = (misSnap && misSnap.exists) ? misSnap.data() : {};
+  } finally {
+    hideLoadingState();
+  }
+}
+
+function showLoadingState(message) {
+  const loadingEl = document.createElement('div');
+  loadingEl.id = 'globalLoading';
+  loadingEl.innerHTML = `<div class="loading-spinner"></div> ${message}`;
+  loadingEl.style.cssText = 'position:fixed;top:20px;right:20px;background:var(--bg-2);padding:12px;border-radius:8px;color:var(--accent);z-index:1000;box-shadow:0 10px 30px rgba(0,0,0,0.5)';
+  document.body.appendChild(loadingEl);
+}
+
+function hideLoadingState() {
+  const el = document.getElementById('globalLoading');
+  if (el) el.remove();
+}
+
+async function saveSetToFirestore(name, cards){
+  if (!userId) throw new Error('Sign in first');
+  
+  showLoadingState('Saving set...');
+  
+  try {
+    await db.collection('users').doc(userId).collection('sets').doc(name).set({
+      cards, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    sets[name] = { cards, createdAt: new Date() };
+  } finally {
+    hideLoadingState();
+  }
+}
+
+async function deleteSetFromFirestore(name){
+  if (!userId) throw new Error('Sign in first');
+  
+  showLoadingState('Deleting set...');
+  
+  try {
+    await db.collection('users').doc(userId).collection('sets').doc(name).delete();
+    delete sets[name];
+  } finally {
+    hideLoadingState();
+  }
+}
+
+async function saveAttemptAnalytics(payload){
+  if (!userId) return;
+  await db.collection('users').doc(userId).collection('attempts').add({
+    ...payload, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  
+  // merge mistakes
+  const misRef = db.collection('users').doc(userId).collection('meta').doc('mistakes');
+  try {
+    const cur = (await misRef.get()).data() || {};
+    const merged = JSON.parse(JSON.stringify(cur));
+    merged[payload.setName] = merged[payload.setName] || {};
+    for (const [k,v] of Object.entries(payload.mistakesMap || {})){
+      merged[payload.setName][k] = (merged[payload.setName][k] || 0) + v;
+    }
+    await misRef.set(merged);
+    mistakesCounter = merged;
+  } catch(e){
+    const fresh = {}; fresh[payload.setName] = payload.mistakesMap || {};
+    await misRef.set(fresh);
+    mistakesCounter = fresh;
+  }
+}
+
+/* ================== AI Categorization ================== */
+async function categorizeWithAI(question, answer) {
+  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'YOUR_OPENROUTER_API_KEY_HERE') {
+    // Fallback to simple keyword matching
+    return categorizeWithKeywords(question, answer);
+  }
+
+  try {
+    const prompt = `Categorize this banking/finance flashcard into one of these categories: Reports, Economics, Finance & Management, RBI, SEBI, Others.
+
+Question: ${question}
+Answer: ${answer}
+
+Return only the category name (case-sensitive):`;
+
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.2-3b-instruct:free',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 50,
+        temperature: 0.1
+      })
     });
 
-    // --- Firestore Ops ---
-    async function loadFlashcardSets() {
-      if (!userId) return;
-      const snap = await db.collection('users').doc(userId).collection('sets').get();
-      flashcardSets = {};
-      snap.forEach(doc => {
-        flashcardSets[doc.id] = doc.data().cards;
+    if (!response.ok) {
+      throw new Error('AI categorization failed');
+    }
+
+    const data = await response.json();
+    const category = data.choices[0]?.message?.content?.trim();
+    
+    const validCategories = ['Reports', 'Economics', 'Finance & Management', 'RBI', 'SEBI', 'Others'];
+    return validCategories.includes(category) ? category : 'Others';
+    
+  } catch (error) {
+    console.warn('AI categorization failed, using keywords:', error);
+    return categorizeWithKeywords(question, answer);
+  }
+}
+
+function categorizeWithKeywords(question, answer) {
+  const text = (question + ' ' + answer).toLowerCase();
+  
+  if (text.includes('rbi') || text.includes('repo') || text.includes('reverse repo') || text.includes('crr') || text.includes('slr')) {
+    return 'RBI';
+  }
+  if (text.includes('sebi') || text.includes('securities') || text.includes('stock exchange') || text.includes('mutual fund')) {
+    return 'SEBI';
+  }
+  if (text.includes('report') || text.includes('annual') || text.includes('quarterly') || text.includes('survey')) {
+    return 'Reports';
+  }
+  if (text.includes('gdp') || text.includes('inflation') || text.includes('economic') || text.includes('fiscal') || text.includes('monetary')) {
+    return 'Economics';
+  }
+  if (text.includes('finance') || text.includes('banking') || text.includes('loan') || text.includes('credit') || text.includes('management')) {
+    return 'Finance & Management';
+  }
+  
+  return 'Others';
+}
+
+categorizeBtn.onclick = async () => {
+  if (!userId) {
+    await showModal('Sign in required', '<div class="small-muted">Sign in to categorize your sets.</div>', [{text:'OK'}]);
+    return;
+  }
+
+  const {result} = await showModal('Auto-categorize cards', 
+    '<div class="small-muted">This will automatically categorize all your flashcards using AI. Existing categories will be overwritten. Continue?</div>', 
+    [{text:'Categorize', className:'danger'}, {text:'Cancel'}]);
+  
+  if (result !== 0) return;
+
+  showLoadingState('Categorizing cards with AI...');
+  
+  try {
+    let totalCards = 0;
+    for (const [setName, setData] of Object.entries(sets)) {
+      for (let i = 0; i < setData.cards.length; i++) {
+        const card = setData.cards[i];
+        const category = await categorizeWithAI(card.q, card.a);
+        card.category = category;
+        totalCards++;
+        
+        // Add small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Save the updated set
+      await saveSetToFirestore(setName, setData.cards);
+    }
+    
+    await showModal('Categorization complete', 
+      `<div class="small-muted">Successfully categorized ${totalCards} cards!</div>`, 
+      [{text:'OK'}]);
+    
+    renderSets();
+    if (activeTab === 'categories') {
+      renderCategories();
+    }
+    
+  } catch (error) {
+    await showModal('Error', `<div class="small-muted">Categorization failed: ${error.message}</div>`, [{text:'OK'}]);
+  } finally {
+    hideLoadingState();
+  }
+};
+
+/* ================== Search functionality ================== */
+searchSets.addEventListener('input', (e) => {
+  currentSearchQuery = e.target.value.toLowerCase();
+  renderSets(currentSearchQuery);
+});
+
+/* ================== UI: render sets ================== */
+function renderSets(searchQuery = ''){
+  setsListEl.innerHTML = '';
+  let names = Object.keys(sets).sort((a,b)=>a.localeCompare(b));
+  
+  // Filter by search query
+  if (searchQuery) {
+    names = names.filter(name => 
+      name.toLowerCase().includes(searchQuery) ||
+      sets[name].cards.some(card => 
+        card.q.toLowerCase().includes(searchQuery) ||
+        card.a.toLowerCase().includes(searchQuery)
+      )
+    );
+  }
+  
+  if (names.length === 0){
+    setsListEl.innerHTML = `<div style="padding:20px;color:var(--muted)">
+      ${searchQuery ? 'No sets match your search.' : 'No flashcard sets yet. Create one!'}
+    </div>`;
+    return;
+  }
+  
+  names.forEach(name=>{
+    const el = document.createElement('div'); el.className='tile';
+    const preview = sets[name].cards[0] ? sets[name].cards[0].q.slice(0,80) : '';
+    const createdAt = sets[name].createdAt ? (new Date(sets[name].createdAt)).toLocaleDateString() : '';
+    
+    // Count categories
+    const categories = {};
+    sets[name].cards.forEach(card => {
+      categories[card.category || 'Others'] = (categories[card.category || 'Others'] || 0) + 1;
+    });
+    
+    const categoryTags = Object.entries(categories)
+      .map(([cat, count]) => `<span class="category-chip ${cat.toLowerCase().replace(/\s+/g, '')}">${cat} (${count})</span>`)
+      .join('');
+    
+    el.innerHTML = `
+      <div class="title">
+        <span>${escapeHtml(name)}</span>
+        <span style="font-size:.82rem;color:var(--muted)">${sets[name].cards.length} cards</span>
+      </div>
+      <div class="preview">${escapeHtml(preview)}</div>
+      <div style="margin:8px 0;display:flex;flex-wrap:wrap;gap:4px">${categoryTags}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <div style="font-size:.82rem;color:var(--muted)">Created: ${createdAt}</div>
+        <div class="actions">
+          <button class="btn ghost" data-action="open">Open</button>
+          <button class="btn ghost" data-action="edit">Edit</button>
+          <button class="btn danger" data-action="delete">Delete</button>
+        </div>
+      </div>`;
+    
+    el.querySelector('[data-action="open"]').onclick = ()=> selectSet(name);
+    el.querySelector('[data-action="edit"]').onclick = ()=> openEditor(name);
+    el.querySelector('[data-action="delete"]').onclick = async ()=> {
+      const modal = await showModal('Confirm delete', `<div class="small-muted">Delete set <b>${escapeHtml(name)}</b>? This cannot be undone.</div>`, [{text:'Delete',className:'danger'},{text:'Cancel'}]);
+      if (modal.result === 0){
+        try { await deleteSetFromFirestore(name); renderSets(); if (currentSetName===name) clearWorkArea(); }
+        catch(e){ await showModal('Error', `<div class="small-muted">${e.message}</div>`, [{text:'OK'}]); }
+      }
+    };
+    setsListEl.appendChild(el);
+  });
+}
+
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ================== Categories View ================== */
+function renderCategories() {
+  const categoriesContent = document.getElementById('categoriesContent');
+  
+  // Collect all cards by category
+  const categorizedCards = {
+    'Reports': [],
+    'Economics': [],
+    'Finance & Management': [],
+    'RBI': [],
+    'SEBI': [],
+    'Others': []
+  };
+  
+  Object.entries(sets).forEach(([setName, setData]) => {
+    setData.cards.forEach((card, index) => {
+      const category = card.category || 'Others';
+      categorizedCards[category].push({
+        ...card,
+        setName,
+        cardIndex: index
       });
-    }
-    async function saveFlashcardSet(name, cards) {
-      if (!userId) throw new Error("Not authenticated");
-      await db.collection('users').doc(userId).collection('sets').doc(name).set({ cards });
-      flashcardSets[name] = cards;
-    }
-    async function deleteFlashcardSet(name) {
-      if (!userId) throw new Error("Not authenticated");
-      await db.collection('users').doc(userId).collection('sets').doc(name).delete();
-      delete flashcardSets[name];
-    }
-
-    // --- UI ---
-    function showSets() {
-      if (!flashcardSets || Object.keys(flashcardSets).length === 0) {
-        app.innerHTML = "<p style='color:var(--orange);text-align:center;margin-top:30px;'>No flashcard sets yet. Create one!</p>";
-        return;
-      }
-      let html = '<div class="set-tiles">';
-      for (const [name, cards] of Object.entries(flashcardSets)) {
-        let preview = cards.length && cards[0]?.q ? cards[0].q : '';
-        if (preview.length > 40) preview = preview.slice(0, 37) + '...';
-        html += `<div class="tile" tabindex="0" data-name="${name}">
-          <strong>${name}</strong>
-          <div class="tile-preview">${preview}</div>
-          <button class="delete-btn" onclick="event.stopPropagation();handleDelete('${name}')">Delete</button>
-        </div>`;
-      }
-      html += '</div>';
-      app.innerHTML = html;
-      document.querySelectorAll('.tile').forEach(tile => tile.onclick = () => selectSet(tile.dataset.name));
-    }
-    async function handleDelete(name) {
-      if (confirm(`Delete flashcard set "${name}"?`)) {
-        try {
-          await deleteFlashcardSet(name);
-          await loadFlashcardSets();
-          showSets();
-        } catch (e) {
-          alert('Error deleting set: ' + e.message);
-        }
-      }
-    }
-
-    function showCreateUI() {
-      app.innerHTML = `
-        <form id="createForm" class="form-box" autocomplete="off" spellcheck="false">
-          <h3 style="margin-bottom:10px;">Create New Flashcards</h3>
-          <div style="display:flex;flex-direction:column;gap:12px;">
-            <textarea id="q" required rows="2" placeholder="Enter question..." style="max-width:100%;word-break:break-word;"></textarea>
-            <textarea id="a" required rows="2" placeholder="Enter answer..." style="max-width:100%;word-break:break-word;"></textarea>
+    });
+  });
+  
+  let html = '';
+  Object.entries(categorizedCards).forEach(([category, cards]) => {
+    if (cards.length === 0) return;
+    
+    html += `
+      <div class="category-section">
+        <div class="category-header">
+          ${category} <span class="small-muted">(${cards.length} cards)</span>
+        </div>
+        <div class="category-cards">
+    `;
+    
+    cards.forEach(card => {
+      const diffClass = `diff-${card.tag}`;
+      html += `
+        <div class="category-card">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <span class="diff-indicator ${diffClass}"></span>
+            <span style="color:var(--accent);font-weight:700">${escapeHtml(card.q.slice(0, 60))}${card.q.length > 60 ? '...' : ''}</span>
+            ${card.bookmarked ? '<span style="color:var(--accent)">⭐</span>' : ''}
           </div>
-          <div style="display:flex;justify-content:center;gap:14px;">
-            <button type="button" id="addCardBtn" class="mini-btn">Add Card</button>
-            <button type="button" id="finishBtn" class="mini-btn">Finish & Save</button>
-            <button type="button" id="cancelBtn" class="mini-btn" style="background:var(--danger);">Cancel</button>
-          </div>
-          <div id="setPreview" style="margin-top:20px;max-height:215px;overflow-y:auto;"></div>
-        </form>
-      `;
-      const qEl = document.getElementById('q');
-      const aEl = document.getElementById('a');
-      let cards = [];
-      document.getElementById('addCardBtn').onclick = () => {
-        const q = qEl.value.trim();
-        const a = aEl.value.trim();
-        if (q && a) {
-          cards.push({ q, a });
-          renderPreview();
-          qEl.value = '';
-          aEl.value = '';
-          qEl.focus();
-        }
-      };
-      document.getElementById('finishBtn').onclick = async () => {
-        if (cards.length === 0) {
-          alert('Please add at least one card.');
-          return;
-        }
-        const name = prompt('Enter a name for this flashcard set:');
-        if (!name || name.trim() === '') return;
-        if (flashcardSets[name]) {
-          alert('Flashcard set name already exists!');
-          return;
-        }
-        try {
-          await saveFlashcardSet(name, cards);
-          alert(`Flashcard set "${name}" saved.`);
-          saveVisitAnalytics();
-          showSets();
-        } catch (e) {
-          alert('Error saving set: ' + e.message);
-        }
-      };
-      document.getElementById('cancelBtn').onclick = () => { showSets(); };
-      function renderPreview() {
-        const previewEl = document.getElementById('setPreview');
-        previewEl.innerHTML = cards.map((card, i) => `<div><strong>${i + 1}.</strong> Q: ${card.q}<br>A: ${card.a}</div>`).join('<hr style="border-color:#444;margin:8px 0;">');
-      }
-    }
-
-    // Test flow
-    function selectSet(name) {
-      currentSetName = name;
-      currentSet = flashcardSets[name];
-      currentIndex = 0;
-      score = 0;
-      showAnswer = false;
-      answerStatusArr = Array(currentSet.length).fill(null);
-      app.innerHTML = `
-        <div class="form-box" style="max-width:98vw;">
-          <h3 style='margin-bottom:10px;font-size:1.18rem;color:var(--accent)'>Test Options</h3>
-          <label style="display:flex;align-items:center; font-size:1rem; gap:8px; margin-bottom:12px;">
-            <input type="checkbox" id="scoreBox" checked style="accent-color: var(--accent); transform:scale(1.22);" />
-            <span>Keep score during test</span>
-          </label>
-          <label style="display:flex;align-items:center; font-size:1rem; gap:8px;">
-            <span style="margin-right:8px;">Timer (minutes, 0 for untimed):</span>
-            <input type="number" id="timerInput" min="0" max="600" value="0" style="width:66px;" />
-          </label>
-          <div style="margin-top:17px;">
-            <button class="mini-btn" id="startTestBtn">Start Test</button>
-            <button class="mini-btn endBtn" id="cancelTestBtn">Cancel</button>
-          </div>
+          <div style="color:var(--muted);font-size:0.9rem">${escapeHtml(card.a.slice(0, 80))}${card.a.length > 80 ? '...' : ''}</div>
+          <div style="margin-top:8px;font-size:0.8rem;color:var(--muted)">From: ${escapeHtml(card.setName)}</div>
         </div>
       `;
-      document.getElementById('startTestBtn').onclick = () => {
-        scoreEnabled = document.getElementById('scoreBox').checked;
-        let timerMins = parseInt(document.getElementById('timerInput').value) || 0;
-        timer = timeLeft = timerMins > 0 ? timerMins * 60 : 0;
-        if (timerId) clearInterval(timerId);
-        if (timer > 0) {
-          timerId = setInterval(() => {
-            timeLeft--;
-            updateScoreTimer();
-            if (timeLeft <= 0) {
-              clearInterval(timerId);
-              alert(`Time's up! Your score: ${score} / ${currentSet.length}`);
-              showSets();
+    });
+    
+    html += '</div></div>';
+  });
+  
+  if (html === '') {
+    html = '<div style="padding:40px;text-align:center;color:var(--muted)">No categorized cards yet. Use the "Categorize" button to organize your flashcards.</div>';
+  }
+  
+  categoriesContent.innerHTML = html;
+}
+
+/* ================== Quiz Mode ================== */
+quizModeBtn.onclick = async () => {
+  // Collect category counts
+  const categoryCounts = {
+    'Reports': 0,
+    'Economics': 0,
+    'Finance & Management': 0,
+    'RBI': 0,
+    'SEBI': 0,
+    'Others': 0
+  };
+  
+  Object.values(sets).forEach(setData => {
+    setData.cards.forEach(card => {
+      const category = card.category || 'Others';
+      categoryCounts[category]++;
+    });
+  });
+  
+  // Create quiz settings modal
+  let settingsHtml = `
+    <div style="margin-bottom:16px">
+      <label class="small-muted">Total Questions</label>
+      <input type="number" id="quizTotal" value="20" min="5" max="100">
+    </div>
+    <div class="quiz-settings">
+  `;
+  
+  Object.entries(categoryCounts).forEach(([category, count]) => {
+    if (count === 0) return;
+    settingsHtml += `
+      <div class="category-selector">
+        <label>
+          <input type="checkbox" id="cat_${category.replace(/\s+/g, '')}" checked>
+          ${category} (${count} available)
+        </label>
+      </div>
+    `;
+  });
+  
+  settingsHtml += '</div><div class="small-muted" style="margin-top:12px">Questions will be equally distributed among selected categories</div>';
+  
+  const {result, values} = await showModal('Quiz Settings', settingsHtml, 
+    [{text:'Start Quiz'}, {text:'Cancel'}], {width: 500});
+  
+  if (result !== 0) return;
+  
+  const totalQuestions = parseInt(values.quizTotal) || 20;
+  const selectedCategories = Object.keys(categoryCounts).filter(cat => 
+    values[`cat_${cat.replace(/\s+/g, '')}`] && categoryCounts[cat] > 0
+  );
+  
+  if (selectedCategories.length === 0) {
+    await showModal('Error', '<div class="small-muted">Please select at least one category.</div>', [{text:'OK'}]);
+    return;
+  }
+  
+  startQuizMode(totalQuestions, selectedCategories);
+};
+
+function startQuizMode(totalQuestions, selectedCategories) {
+  // Collect cards from selected categories
+  const categoryCards = {};
+  selectedCategories.forEach(cat => categoryCards[cat] = []);
+  
+  Object.entries(sets).forEach(([setName, setData]) => {
+    setData.cards.forEach((card, index) => {
+      const category = card.category || 'Others';
+      if (selectedCategories.includes(category)) {
+        categoryCards[category].push({
+          ...card,
+          setName,
+          cardIndex: index,
+          globalId: `${setName}_${index}`
+        });
+      }
+    });
+  });
+  
+  // Distribute questions equally among categories
+  const questionsPerCategory = Math.floor(totalQuestions / selectedCategories.length);
+  const extraQuestions = totalQuestions % selectedCategories.length;
+  
+  playQueue = [];
+  selectedCategories.forEach((category, index) => {
+    const categoryPool = [...categoryCards[category]];
+    shuffleArray(categoryPool);
+    
+    let questionsForThis = questionsPerCategory;
+    if (index < extraQuestions) questionsForThis++;
+    
+    playQueue.push(...categoryPool.slice(0, Math.min(questionsForThis, categoryPool.length)));
+  });
+  
+  shuffleArray(playQueue);
+  
+  // Start quiz
+  isQuizMode = true;
+  currentSetName = 'Quiz Mode';
+  currentSetTitle.textContent = 'Quiz Mode';
+  setStats.textContent = `${playQueue.length} questions from ${selectedCategories.length} categories`;
+  
+  inTest = true;
+  currentIndex = 0;
+  answerStatus = Array(playQueue.length).fill(null);
+  mistakesThisAttempt = {};
+  score = 0;
+  timeLimit = 0;
+  timeLeft = 0;
+  startTimestamp = Date.now();
+  
+  testNav.style.display = 'flex';
+  timerAndScore.style.display = 'flex';
+  updateScoreUI();
+  populateCardWrapInitial();
+  showQuizCard(true);
+  
+  // Switch to sets tab to show the quiz
+  switchTab('sets');
+}
+
+/* ================== Select / Create / Edit ================== */
+function selectSet(name){
+  isQuizMode = false;
+  currentSetName = name;
+  currentSetTitle.textContent = name;
+  setStats.textContent = `${sets[name].cards.length} cards`;
+  startTestBtn.disabled = false;
+  clearCardWrap(); populateCardWrapInitial(); emptyWorkArea();
+}
+
+createSetBtn.onclick = async ()=>{
+  let cards = []; let setName='';
+  while(true){
+    const {result, values} = await showModal('Create flashcard', `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label class="small-muted">Set name</label>
+        <input id="m_name" placeholder="Set name" value="${escapeHtml(setName)}"/>
+        <label class="small-muted">Question</label>
+        <textarea id="m_q" rows="2"></textarea>
+        <label class="small-muted">Answer</label>
+        <textarea id="m_a" rows="2"></textarea>
+        <label class="small-muted">Difficulty</label>
+        <select id="m_tag"><option>easy</option><option selected>medium</option><option>hard</option></select>
+        <label><input id="m_book" type="checkbox"> Bookmark</label>
+        <div class="small-muted">Add several cards then Finish & Save (Categories will be auto-detected)</div>
+      </div>
+    `, [{text:'Add card'},{text:'Finish & Save'},{text:'Cancel'}], {focus:'#m_name'});
+    
+    if (result === 0){
+      const q=values.m_q?.trim(); const a=values.m_a?.trim(); setName=values.m_name?.trim(); 
+      const tag=values.m_tag||'medium'; const bookmarked=!!values.m_book;
+      
+      if(!setName){ await showModal('Oops','<div class="small-muted">Provide set name first.</div>',[{text:'OK'}]); continue;}
+      if(!q||!a){ await showModal('Oops','<div class="small-muted">Enter both Q and A.</div>',[{text:'OK'}]); continue;}
+      
+      // Auto-categorize using AI
+      showLoadingState('Categorizing card...');
+      const category = await categorizeWithAI(q, a);
+      hideLoadingState();
+      
+      cards.push({q, a, tag, bookmarked, category, notes:''});
+      continue;
+      
+    } else if (result === 1){
+      setName = values.m_name?.trim();
+      if(!setName){ await showModal('Oops','<div class="small-muted">Set must have a name</div>',[{text:'OK'}]); continue; }
+      if(cards.length===0){ await showModal('Oops','<div class="small-muted">Add at least one card</div>',[{text:'OK'}]); continue; }
+      if(sets[setName]){ await showModal('Oops','<div class="small-muted">Set name exists</div>',[{text:'OK'}]); continue; }
+      
+      try { 
+        await saveSetToFirestore(setName, cards); 
+        await loadUserSets(); 
+        renderSets(); 
+        updateStudyStreak();
+        await showModal('Saved',`<div class="small-muted">Saved "${escapeHtml(setName)}" with auto-categorized cards!</div>`,[{text:'OK'}]); 
+      }
+      catch(e){ await showModal('Error',`<div class="small-muted">${e.message}</div>`,[{text:'OK'}]); }
+      break;
+    } else break;
+  }
+};
+
+
+async function openEditor(name){
+  const cards = JSON.parse(JSON.stringify(sets[name].cards || []));
+  const {result, values} = await showModal(`Edit: ${escapeHtml(name)}`, `
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="small-muted">Edit JSON array of cards (q,a,tag,bookmarked,category,notes)</div>
+      <textarea id="jsonEdit" rows="12">${escapeHtml(JSON.stringify(cards,null,2))}</textarea>
+    </div>
+  `, [{text:'Save'},{text:'Cancel'}], {width:800});
+  if(result===0){
+    try{
+      const newVal = JSON.parse(values.jsonEdit || '[]');
+      if(!Array.isArray(newVal)) throw new Error('JSON must be array');
+      const normalized = newVal.map(x=>({
+        q:x.q||'',
+        a:x.a||'',
+        tag:x.tag||'medium',
+        bookmarked:!!x.bookmarked,
+        category:x.category||'Others',
+        notes:x.notes||''
+      }));
+      await saveSetToFirestore(name, normalized);
+      await loadUserSets(); renderSets(); await showModal('Saved','<div class="small-muted">Saved</div>',[{text:'OK'}]);
+    } catch(e){ await showModal('Error',`<div class="small-muted">${e.message}</div>`,[{text:'OK'}]); }
+  }
+}
+
+/* ================== Export functionality ================== */
+exportBtn.onclick = () => {
+  if (!currentSetName || isQuizMode) {
+    showModal('No set selected', '<div class="small-muted">Select a set first</div>', [{text:'OK'}]);
+    return;
+  }
+  
+  const data = JSON.stringify(sets[currentSetName].cards, null, 2);
+  const blob = new Blob([data], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${currentSetName}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+/* ================== Test flow ================== */
+startTestBtn.onclick = async ()=>{
+  if(!currentSetName || isQuizMode) return;
+  if(!sets[currentSetName] || sets[currentSetName].cards.length===0) return;
+  const {result, values} = await showModal('Test settings', `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <label class="small-muted">Time (minutes) — whole number, 0 = untimed</label>
+      <input id="timeMins" type="number" min="0" value="0"/>
+      <label class="small-muted">Scoring enabled? (toggle on screen)</label>
+    </div>
+  `, [{text:'Start'},{text:'Cancel'}], {focus:'#timeMins'});
+  if(result!==0) return;
+  const raw = values.timeMins; let mins = parseInt(raw,10);
+  if(isNaN(mins)||mins<0){ await showModal('Invalid','<div class="small-muted">Enter whole number ≥ 0</div>',[{text:'OK'}]); return;}
+  
+  const cards = sets[currentSetName].cards;
+  playQueue = Array.from({length:cards.length},(_,i)=>i);
+  
+  if(shuffleChk.checked) shuffleArray(playQueue);
+  
+  if(srChk.checked){
+    // Sort by spaced repetition priority
+    playQueue.sort((a,b) => {
+      const cardIdA = `${currentSetName}_${a}`;
+      const cardIdB = `${currentSetName}_${b}`;
+      const dueA = isCardDue(cardIdA) ? 1 : 0;
+      const dueB = isCardDue(cardIdB) ? 1 : 0;
+      
+      if (dueA !== dueB) return dueB - dueA; // Due cards first
+      
+      // Then by mistake count
+      const mistakesA = (mistakesCounter[currentSetName] && mistakesCounter[currentSetName][a]) || 0;
+      const mistakesB = (mistakesCounter[currentSetName] && mistakesCounter[currentSetName][b]) || 0;
+      return mistakesB - mistakesA;
+    });
+  }
+  
+  inTest=true; currentIndex=0; answerStatus = Array(playQueue.length).fill(null);
+  mistakesThisAttempt = {}; score=0; timeLimit = mins>0 ? mins*60 : 0; timeLeft = timeLimit;
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  if(timeLimit>0){
+    timerInterval = setInterval(()=>{ 
+      timeLeft--; 
+      updateScoreUI(); 
+      if(timeLeft<=0){ 
+        clearInterval(timerInterval); 
+        endTest(); 
+      } 
+    },1000);
+  }
+  startTimestamp = Date.now();
+  testNav.style.display='flex'; timerAndScore.style.display='flex'; updateScoreUI();
+  populateCardWrapInitial(); showCard(true);
+  updateStudyStreak();
+};
+
+/* 2-card nodes */
+function populateCardWrapInitial(){
+  clearCardWrap();
+  const n1 = createCardNode(); const n2 = createCardNode();
+  cardWrap.appendChild(n1); cardWrap.appendChild(n2);
+  cardNodes = [n1,n2];
+  n1.classList.add('visible'); n1.style.transform='translateX(0)'; n1.style.opacity='1';
+  n2.classList.remove('visible'); n2.style.transform='translateX(110%)'; n2.style.opacity='0';
+  n1.dataset.flipped='false'; n2.dataset.flipped='false';
+}
+
+function createCardNode(){
+  const d = document.createElement('div'); d.className='card';
+  d.innerHTML = `<div class="card-face front"></div><div class="card-face back"></div>`;
+  d.addEventListener('click', ()=> toggleFlipOnNode(d));
+  return d;
+}
+function clearCardWrap(){ cardWrap.innerHTML=''; cardNodes=[]; }
+
+/* show card (animated) - works for both regular and quiz mode */
+function showCard(initial=false){
+  if(!inTest) return;
+  if(!cardNodes || cardNodes.length<2) populateCardWrapInitial();
+  
+  if (isQuizMode) {
+    showQuizCard(initial);
+    return;
+  }
+  
+  const visible = cardNodes.find(n=>n.classList.contains('visible')) || cardNodes[0];
+  const incoming = (visible===cardNodes[0])?cardNodes[1]:cardNodes[0];
+  const idxGlobal = playQueue[currentIndex];
+  const cardData = sets[currentSetName].cards[idxGlobal];
+  const cardId = `${currentSetName}_${idxGlobal}`;
+  
+  const difficultyColors = {
+    easy: 'var(--easy-color)',
+    medium: 'var(--medium-color)', 
+    hard: 'var(--hard-color)'
+  };
+  
+  const difficultyColor = difficultyColors[cardData.tag] || difficultyColors.medium;
+  
+  const front = `
+    <div style="position:relative;width:100%;height:100%">
+      <button onclick="toggleBookmark(${idxGlobal})" class="bookmark-btn ${cardData.bookmarked ? 'bookmarked' : ''}">
+        ${cardData.bookmarked ? '⭐' : '☆'}
+      </button>
+      <button onclick="changeDifficulty('${currentSetName}', ${idxGlobal})" class="difficulty-selector ${cardData.tag}">
+        ${cardData.tag.toUpperCase()}
+      </button>
+      <div class="question-text" style="font-weight:700;color:var(--accent)">${escapeHtml(cardData.q)}</div>
+    </div>`;
+  
+  const back = `
+    <div style="position:relative;width:100%;height:100%">
+      <button onclick="showNotesModal('${currentSetName}', ${idxGlobal})" class="notes-icon" title="Add/View Notes">
+        📝
+      </button>
+      <div class="answer-text" style="font-weight:700">${escapeHtml(cardData.a)}</div>
+      ${cardData.notes ? `<div class="notes-display">📝 ${escapeHtml(cardData.notes)}</div>` : ''}
+    </div>`;
+
+  incoming.querySelector('.front').innerHTML = front;
+  incoming.querySelector('.back').innerHTML = back;
+  incoming.querySelector('.front').style.display='block';
+  incoming.querySelector('.back').style.display='none';
+  incoming.dataset.flipped='false';
+
+  if(initial){
+    visible.classList.remove('visible'); 
+    incoming.classList.add('visible');
+    incoming.style.transform='translateX(0)'; 
+    incoming.style.opacity='1';
+    visible.style.transform='translateX(110%)'; 
+    visible.style.opacity='0'; 
+    visible.dataset.flipped='false';
+  } else {
+    // ✅ ENHANCED SLIDE ANIMATION
+    visible.style.transition='transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+    incoming.style.transition='transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+    
+    visible.style.transform='translateX(-110%) rotateY(-5deg)'; 
+    visible.style.opacity='0';
+    incoming.style.transform='translateX(110%) rotateY(5deg)'; 
+    incoming.style.opacity='0';
+    
+    requestAnimationFrame(()=> setTimeout(()=> { 
+      incoming.style.transform='translateX(0) rotateY(0deg)'; 
+      incoming.style.opacity='1'; 
+    }, 50));
+    
+    setTimeout(()=> { 
+      visible.classList.remove('visible'); 
+      incoming.classList.add('visible'); 
+      visible.style.transform='translateX(110%)'; 
+      visible.style.opacity='0'; 
+      visible.dataset.flipped='false'; 
+    }, 500);
+  }
+
+  cardProgress.textContent = `Card ${currentIndex+1} / ${playQueue.length}`;
+  prevBtn.disabled = (currentIndex===0);
+  nextBtn.disabled = (currentIndex>=playQueue.length-1);
+  updateScoreUI();
+}
+
+
+function showQuizCard(initial=false){
+  if(!cardNodes || cardNodes.length<2) populateCardWrapInitial();
+  
+  const visible = cardNodes.find(n=>n.classList.contains('visible')) || cardNodes[0];
+  const incoming = (visible===cardNodes[0])?cardNodes[1]:cardNodes[0];
+  const cardData = playQueue[currentIndex];
+  
+  const difficultyColors = {
+    easy: 'var(--easy-color)',
+    medium: 'var(--medium-color)', 
+    hard: 'var(--hard-color)'
+  };
+  
+  const difficultyColor = difficultyColors[cardData.tag] || difficultyColors.medium;
+  
+  const front = `
+    <div style="position:relative;width:100%;height:100%">
+      <div class="difficulty-selector ${cardData.tag}">${cardData.tag.toUpperCase()}</div>
+      <div style="position:absolute;top:8px;right:8px;font-size:11px;color:var(--muted);background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:4px">
+        ${cardData.setName}
+      </div>
+      <div class="question-text" style="font-weight:700;color:var(--accent)">${escapeHtml(cardData.q)}</div>
+    </div>`;
+  
+  const back = `
+    <div style="position:relative;width:100%;height:100%">
+      <div class="difficulty-selector ${cardData.tag}">${cardData.tag.toUpperCase()}</div>
+      <div style="position:absolute;top:8px;right:8px;font-size:11px;color:var(--muted);background:rgba(0,0,0,0.6);padding:4px 8px;border-radius:4px">
+        ${cardData.setName}
+      </div>
+      <div class="answer-text" style="font-weight:700">${escapeHtml(cardData.a)}</div>
+      ${cardData.notes ? `<div class="notes-display">📝 ${escapeHtml(cardData.notes)}</div>` : ''}
+    </div>`;
+
+  incoming.querySelector('.front').innerHTML = front;
+  incoming.querySelector('.back').innerHTML = back;
+  incoming.querySelector('.front').style.display='block';
+  incoming.querySelector('.back').style.display='none';
+  incoming.dataset.flipped='false';
+
+  // Same animation logic as showCard function
+  if(initial){
+    visible.classList.remove('visible'); 
+    incoming.classList.add('visible');
+    incoming.style.transform='translateX(0)'; 
+    incoming.style.opacity='1';
+    visible.style.transform='translateX(110%)'; 
+    visible.style.opacity='0'; 
+    visible.dataset.flipped='false';
+  } else {
+    visible.style.transition='transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+    incoming.style.transition='transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease';
+    
+    visible.style.transform='translateX(-110%) rotateY(-5deg)'; 
+    visible.style.opacity='0';
+    incoming.style.transform='translateX(110%) rotateY(5deg)'; 
+    incoming.style.opacity='0';
+    
+    requestAnimationFrame(()=> setTimeout(()=> { 
+      incoming.style.transform='translateX(0) rotateY(0deg)'; 
+      incoming.style.opacity='1'; 
+    }, 50));
+    
+    setTimeout(()=> { 
+      visible.classList.remove('visible'); 
+      incoming.classList.add('visible'); 
+      visible.style.transform='translateX(110%)'; 
+      visible.style.opacity='0'; 
+      visible.dataset.flipped='false'; 
+    }, 500);
+  }
+
+  cardProgress.textContent = `Question ${currentIndex+1} / ${playQueue.length}`;
+  prevBtn.disabled = (currentIndex===0);
+  nextBtn.disabled = (currentIndex>=playQueue.length-1);
+  updateScoreUI();
+}
+
+
+/* ================== Card Interactive Features ================== */
+function toggleBookmark(cardIndex) {
+  if (!currentSetName || isQuizMode) return;
+  sets[currentSetName].cards[cardIndex].bookmarked = !sets[currentSetName].cards[cardIndex].bookmarked;
+  
+  // Save to Firestore if signed in
+  if (userId) {
+    saveSetToFirestore(currentSetName, sets[currentSetName].cards);
+  }
+  
+  // Refresh current card display
+  showCard(true);
+}
+
+async function changeDifficulty(setName, cardIndex) {
+  if (isQuizMode) return;
+  
+  const currentDifficulty = sets[setName].cards[cardIndex].tag;
+  const {result, values} = await showModal('Change Difficulty', `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <label class="small-muted">Select difficulty level:</label>
+      <select id="newDifficulty">
+        <option value="easy" ${currentDifficulty === 'easy' ? 'selected' : ''}>Easy</option>
+        <option value="medium" ${currentDifficulty === 'medium' ? 'selected' : ''}>Medium</option>
+        <option value="hard" ${currentDifficulty === 'hard' ? 'selected' : ''}>Hard</option>
+      </select>
+    </div>
+  `, [{text:'Update'}, {text:'Cancel'}]);
+  
+  if (result === 0) {
+    sets[setName].cards[cardIndex].tag = values.newDifficulty;
+    
+    // Save to Firestore if signed in
+    if (userId) {
+      await saveSetToFirestore(setName, sets[setName].cards);
+    }
+    
+    // Refresh current card display
+    showCard(true);
+  }
+}
+
+async function showNotesModal(setName, cardIndex) {
+  if (isQuizMode) return;
+  
+  const currentNotes = sets[setName].cards[cardIndex].notes || '';
+  const {result, values} = await showModal('Card Notes', `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <label class="small-muted">Your notes for this card:</label>
+      <textarea id="cardNotes" rows="4" placeholder="Add your notes here...">${escapeHtml(currentNotes)}</textarea>
+    </div>
+  `, [{text:'Save'}, {text:'Cancel'}], {width: 500});
+  
+  if (result === 0) {
+    sets[setName].cards[cardIndex].notes = values.cardNotes || '';
+    
+    // Save to Firestore if signed in
+    if (userId) {
+      await saveSetToFirestore(setName, sets[setName].cards);
+    }
+    
+    // Refresh current card display
+    showCard(true);
+  }
+}
+
+/* flip animation: rotateY */
+function toggleFlipOnNode(node){
+  const frontEl = node.querySelector('.front');
+  const backEl = node.querySelector('.back');
+  if(!frontEl||!backEl) return;
+  
+  const flipped = node.dataset.flipped === 'true';
+  
+  // ✅ ENHANCED FLIP ANIMATION
+  node.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+  
+  if(!flipped){
+    // Flip to show back with enhanced animation
+    node.style.transform = 'rotateY(180deg) scale(1.02)';
+    
+    setTimeout(()=> { 
+      frontEl.style.display='none'; 
+      backEl.style.display='block'; 
+      node.dataset.flipped='true'; 
+    }, 400);
+    
+    // Add subtle bounce back
+    setTimeout(()=> { 
+      node.style.transform = 'rotateY(180deg) scale(1)';
+    }, 600);
+    
+  } else {
+    // Flip back to front
+    node.style.transform = 'rotateY(0deg) scale(1.02)';
+    
+    setTimeout(()=> { 
+      backEl.style.display='none'; 
+      frontEl.style.display='block'; 
+      node.dataset.flipped='false'; 
+    }, 400);
+    
+    // Add subtle bounce back
+    setTimeout(()=> { 
+      node.style.transform = 'rotateY(0deg) scale(1)';
+    }, 600);
+  }
+}
+
+flipBtn.onclick = ()=> {
+  const visible = cardWrap.querySelector('.visible');
+  if(visible) toggleFlipOnNode(visible);
+};
+
+/* next / prev behavior */
+nextBtn.onclick = ()=> {
+  if(!inTest) return;
+  if(scoreChk.checked && answerStatus[currentIndex]===null){
+    showModalMarkAnswer().then(({result})=>{
+      if(result===0) markAnswer(false);
+      else if(result===1) advanceIndex(1); // skip
+      else if(result===2) markAnswer(true);
+    });
+  } else {
+    advanceIndex(1);
+  }
+};
+prevBtn.onclick = ()=> { if(!inTest) return; if(currentIndex>0){ currentIndex--; showCard(); } };
+
+function advanceIndex(delta){
+  const next = currentIndex + delta;
+  if(next >= playQueue.length){ endTest(); return; }
+  currentIndex = next; showCard();
+}
+
+/* mark answer */
+function markAnswer(val){
+  if(!inTest) return;
+  
+  // Play sound
+  try {
+    if (val && sounds.correct) {
+      sounds.correct.play().catch(() => {}); // Ignore audio errors
+    } else if (!val && sounds.wrong) {
+      sounds.wrong.play().catch(() => {}); // Ignore audio errors
+    }
+  } catch(e) {}
+  
+  // Update spaced repetition
+  if (!isQuizMode) {
+    const cardId = `${currentSetName}_${playQueue[currentIndex]}`;
+    updateSpacedRepetition(cardId, val ? 4 : 1); // 4 = correct, 1 = wrong
+  } else {
+    const cardData = playQueue[currentIndex];
+    const cardId = cardData.globalId;
+    updateSpacedRepetition(cardId, val ? 4 : 1);
+  }
+  
+  if(!scoreChk.checked){
+    answerStatus[currentIndex] = null;
+  } else {
+    if(answerStatus[currentIndex] !== null){
+      const prev = answerStatus[currentIndex];
+      if(prev === true && val === false) score--;
+      if(prev === false && val === true) score++;
+      answerStatus[currentIndex] = val;
+    } else {
+      if(val === true) score++;
+      else {
+        if (isQuizMode) {
+          const cardData = playQueue[currentIndex];
+          const cardKey = cardData.globalId;
+          mistakesThisAttempt[cardKey] = (mistakesThisAttempt[cardKey]||0)+1;
+        } else {
+          const cardIdx = playQueue[currentIndex];
+          mistakesThisAttempt[cardIdx] = (mistakesThisAttempt[cardIdx]||0)+1;
+        }
+      }
+      answerStatus[currentIndex] = val;
+    }
+  }
+  updateScoreUI();
+  setTimeout(()=> { if(currentIndex < playQueue.length-1) advanceIndex(1); else endTest(); }, 220);
+}
+
+/* update score / timer ring */
+function updateScoreUI(){
+  scoreLabel.textContent = `${score} / ${playQueue.length}`;
+  if(timeLimit>0){
+    const used = 1 - (timeLeft/timeLimit);
+    const deg = Math.min(360, Math.round(used*360));
+    timerRing.style.transition = 'background 0.3s ease';
+    
+    // Add warning colors when time is low
+    if (used > 0.8) {
+      timerRing.style.background = `conic-gradient(#ff6b6b ${deg}deg, rgba(255,255,255,0.03) ${deg}deg)`;
+    } else {
+      timerRing.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,0.03) ${deg}deg)`;
+    }
+  } else {
+    const pct = playQueue.length ? Math.round((score/playQueue.length)*100) : 0;
+    const deg = Math.min(360, Math.round((pct/100)*360));
+    timerRing.style.background = `conic-gradient(var(--accent) ${deg}deg, rgba(255,255,255,0.03) ${deg}deg)`;
+  }
+}
+
+/* end test */
+endBtn.onclick = ()=> { if(inTest) endTest(); };
+
+async function endTest(){
+  if(!inTest) return;
+  inTest=false;
+  testNav.style.display='none';
+  timerAndScore.style.display='none';
+  if(timerInterval){ clearInterval(timerInterval); timerInterval=null; }
+  const totalCards = playQueue.length;
+  const correctAnswers = score;
+  const wrongAnswers = totalCards - correctAnswers;
+  const timeSpentSeconds = Math.round((Date.now() - startTimestamp)/1000);
+  const mistakesMap = {};
+  
+  if (isQuizMode) {
+    // For quiz mode, we need to handle mistakes differently
+    for(const [k,v] of Object.entries(mistakesThisAttempt)) mistakesMap[k] = v;
+  } else {
+    for(const [k,v] of Object.entries(mistakesThisAttempt)) mistakesMap[String(k)] = v;
+  }
+  
+  // save analytics
+  if(userId){
+    try{ 
+      await saveAttemptAnalytics({ 
+        setName: currentSetName, 
+        totalCards, 
+        correctAnswers, 
+        wrongAnswers, 
+        accuracy: totalCards?Math.round((correctAnswers/totalCards)*100):0, 
+        timeSpentSeconds, 
+        mistakesMap,
+        isQuizMode 
+      }); 
+    } catch(e){ console.warn(e); }
+  } else {
+    const local = JSON.parse(localStorage.getItem('fc_attempts')||'[]');
+    local.push({ 
+      setName: currentSetName, 
+      totalCards, 
+      correctAnswers, 
+      wrongAnswers, 
+      accuracy: totalCards?Math.round((correctAnswers/totalCards)*100):0, 
+      timeSpentSeconds, 
+      timestamp: Date.now(),
+      isQuizMode 
+    });
+    localStorage.setItem('fc_attempts', JSON.stringify(local));
+  }
+  
+  // record activity date locally for calendar
+  saveLocalActivity(new Date());
+  
+  const accuracy = totalCards ? Math.round((correctAnswers/totalCards)*100) : 0;
+  const resultMessage = isQuizMode ? 
+    `Quiz completed! ${correctAnswers} / ${totalCards} (${accuracy}%)` :
+    `Test completed! ${correctAnswers} / ${totalCards} (${accuracy}%)`;
+  
+  await showModal('Test finished', 
+    `<div style="font-weight:700;color:var(--accent)">${resultMessage}</div>
+     <div class="small-muted">Time spent: ${formatTime(timeSpentSeconds)}</div>`, 
+    [{text:'OK'}]);
+  
+  // Reset quiz mode
+  // Reset quiz mode
+  if (isQuizMode) {
+    isQuizMode = false;
+    playQueue = [];
+  }
+}
+
+/* ================== Analytics & calendar ================== */
+let accuracyChart = null, timeChart = null;
+
+analyticsBtn.onclick = async ()=>{
+  if(!userId){ await showModal('Sign in required','<div class="small-muted">Sign in with Google to view analytics.</div>',[{text:'OK'}]); return; }
+  analyticsPanel.style.display='block';
+  analyticsPanel.scrollIntoView({behavior:'smooth'});
+  document.getElementById('weakAreas').innerHTML = '<div class="small-muted">Loading...</div>';
+  document.getElementById('masteredSets').innerHTML = '<div class="small-muted">Loading...</div>';
+
+  const attemptsSnap = await db.collection('users').doc(userId).collection('attempts').orderBy('timestamp','desc').limit(50).get();
+  const attempts = [];
+  attemptsSnap.forEach(doc => { 
+    const d=doc.data(); 
+    attempts.push({ 
+      setName:d.setName, 
+      accuracy:d.accuracy||0, 
+      timeSpentSeconds:d.timeSpentSeconds||0, 
+      timestamp: d.timestamp?d.timestamp.toDate():new Date(),
+      isQuizMode: d.isQuizMode || false
+    }); 
+  });
+
+  const last = attempts.slice(0,20).reverse();
+  const labels = last.map(a=>`${a.timestamp.toLocaleDateString()} ${a.timestamp.toLocaleTimeString()}`);
+  const accuracyData = last.map(a=>a.accuracy);
+  const timeData = last.map(a=>Math.round((a.timeSpentSeconds||0)/60*100)/100);
+  setTimeout(()=> renderAnalyticsCharts(labels, accuracyData, timeData), 120);
+
+  // Weak areas analysis - enhanced version
+  const weakAreasEl = document.getElementById('weakAreas');
+  const weakCards = [];
+  
+  if(mistakesCounter){
+    for(const [setName, setMistakes] of Object.entries(mistakesCounter)){
+      if(!sets[setName]) continue;
+      for(const [cardIdx, mistakeCount] of Object.entries(setMistakes)){
+        const cardIndex = parseInt(cardIdx);
+        const card = sets[setName].cards[cardIndex];
+        if(!card) continue;
+        
+        // Calculate attempts from analytics
+        const cardAttempts = attempts.filter(a => 
+          a.setName === setName && 
+          a.mistakesMap && 
+          a.mistakesMap[cardIdx]
+        ).length + mistakeCount;
+        
+        const mistakeRate = cardAttempts > 0 ? (mistakeCount / cardAttempts) * 100 : 0;
+        
+        weakCards.push({
+          setName,
+          cardIndex,
+          question: card.q,
+          answer: card.a,
+          mistakes: mistakeCount,
+          attempts: cardAttempts,
+          mistakeRate,
+          category: card.category || 'Others',
+          difficulty: card.tag
+        });
+      }
+    }
+  }
+  
+  // Sort by mistake rate (descending)
+  weakCards.sort((a,b) => b.mistakeRate - a.mistakeRate);
+  
+  if(weakCards.length > 0){
+    weakAreasEl.innerHTML = weakCards.slice(0, 10).map(item => `
+      <div class="weak-item">
+        <div class="weak-item-question">${escapeHtml(item.question.slice(0, 80))}${item.question.length > 80 ? '...' : ''}</div>
+        <div class="weak-item-stats">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span>Set: ${escapeHtml(item.setName)}</span>
+            <span class="category-chip ${item.category.toLowerCase().replace(/\s+/g, '')}">${item.category}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span>Mistakes: ${item.mistakes}/${item.attempts} (${Math.round(item.mistakeRate)}%)</span>
+            <span class="diff-indicator diff-${item.difficulty}" style="width:12px;height:12px;margin-left:8px"></span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    weakAreasEl.innerHTML = '<div class="small-muted">No mistakes recorded yet. Keep studying!</div>';
+  }
+
+  // mastered sets
+  const attemptsAllSnap = await db.collection('users').doc(userId).collection('attempts').orderBy('timestamp','desc').limit(200).get();
+  const attemptsBySet = {};
+  attemptsAllSnap.forEach(doc => { 
+    const d=doc.data(); 
+    const name=d.setName||'unknown'; 
+    attemptsBySet[name]=attemptsBySet[name]||[]; 
+    attemptsBySet[name].push(d); 
+  });
+  
+  const mastered = [];
+  for(const [name,arr] of Object.entries(attemptsBySet)){
+    const last3 = arr.slice(0,3);
+    if(last3.length===3 && last3.every(x=> (x.accuracy||0) >= 85)) mastered.push(name);
+  }
+  const masteredEl = document.getElementById('masteredSets');
+  masteredEl.innerHTML = mastered.length ? mastered.map(s=>`<div style="padding:8px">${escapeHtml(s)}</div>`).join('') : '<div class="small-muted">None yet — aim for 3 attempts ≥ 85%</div>';
+
+  // build calendar  prefer Firestore if available
+  const dayCounts = {};
+  const attemptsAllSnap2 = await db.collection('users').doc(userId).collection('attempts').get();
+  attemptsAllSnap2.forEach(doc=>{
+    const d=doc.data(); const ts = d.timestamp?d.timestamp.toDate():null;
+    if(ts){ const dayKey = ts.toISOString().slice(0,10); dayCounts[dayKey] = (dayCounts[dayKey]||0)+1; }
+  });
+  const setsSnap = await db.collection('users').doc(userId).collection('sets').get();
+  setsSnap.forEach(doc=>{ 
+    const d=doc.data(); 
+    const ca = d.createdAt?d.createdAt.toDate():null; 
+    if(ca){ const dayKey = ca.toISOString().slice(0,10); dayCounts[dayKey] = (dayCounts[dayKey]||0)+1; } 
+  });
+
+  // also add localStorage activity
+  const localAct = JSON.parse(localStorage.getItem('fc_activity')||'{}');
+  for(const [k,v] of Object.entries(localAct)) dayCounts[k] = (dayCounts[k]||0) + v;
+
+  // render calendar for current month
+  renderSmallCalendar(dayCounts);
+};
+
+/* charts */
+function renderAnalyticsCharts(labels, accuracyData, timeData){
+  const ctxA = document.getElementById('accuracyChart').getContext('2d');
+  const ctxT = document.getElementById('timeChart').getContext('2d');
+  if(accuracyChart) accuracyChart.destroy();
+  if(timeChart) timeChart.destroy();
+  
+  // ✅ FIXED: Shorten long labels for better fit
+  const shortLabels = labels.map(label => {
+    const parts = label.split(' ');
+    if (parts.length >= 2) {
+      return parts[0]; // Just show date part
+    }
+    return label;
+  });
+  
+  accuracyChart = new Chart(ctxA, { 
+    type: 'line', 
+    data: {
+      labels: shortLabels, // ✅ Use shortened labels
+      datasets: [{ 
+        label: 'Accuracy %', 
+        data: accuracyData,
+        fill: true, 
+        tension: 0.28, 
+        pointRadius: 4, // ✅ Smaller points
+        backgroundColor: 'rgba(255,179,0,0.12)', 
+        borderColor: '#ffb300', 
+        borderWidth: 2 
+      }] 
+    }, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 45, // ✅ Rotate labels for better fit
+            font: {
+              size: 10 // ✅ Smaller font
             }
-          }, 1000);
-        }
-        renderCard();
-      };
-      document.getElementById('cancelTestBtn').onclick = showSets;
-    }
-
-    function updateScoreTimer() {
-      const el = document.getElementById('scoreTimer');
-      if (el) {
-        let scoreText = scoreEnabled ? `Score: ${score} ` : '';
-        let timerText = timer > 0 ? `| Time Left: ${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}` : '';
-        el.textContent = `${scoreText}${timerText} | Card ${currentIndex + 1} / ${currentSet.length}`;
-      }
-    }
-
-    // Render card with slide animation
-    function renderCard(direction='right') {
-      const cardShell = document.querySelector('.card-shell');
-      if (cardShell && direction && typeof prevCardIndex === 'number' && prevCardIndex !== currentIndex) {
-        let prevCard = document.querySelector('.card');
-        if (prevCard) {
-          prevCard.classList.add('slide-out');
-          setTimeout(() => {
-            doRenderCard(direction);
-          }, 370);
-          return;
-        }
-      }
-      doRenderCard(direction);
-      prevCardIndex = currentIndex;
-    }
-    function doRenderCard(direction) {
-      const animClass = 'slide-in';
-      const cardData = currentSet[currentIndex];
-      app.innerHTML = `
-        <div class="card-shell">
-          <div class="top-progress" aria-live="polite" aria-atomic="true">
-            Card ${currentIndex + 1} / ${currentSet.length}
-          </div>
-          <div class="card${showAnswer ? ' flipped' : ''} ${animClass}" tabindex="0" aria-pressed="${showAnswer}" aria-label="${showAnswer?'Answer':'Question'}">
-            ${showAnswer ? cardData.a : cardData.q}
-          </div>
-          <div class="nav-panel" aria-label="Navigation buttons">
-            <button class="mini-btn" id="prev" ${currentIndex === 0 ? 'disabled' : ''}>Previous</button>
-            <button class="mini-btn" id="flip">${showAnswer ? 'Hide Answer' : 'Show Answer'}</button>
-            <button class="mini-btn" id="next" ${currentIndex === currentSet.length - 1 ? 'disabled' : ''}>Next</button>
-            <button class="mini-btn endBtn" id="end">End Test</button>
-          </div>
-          <div id="scoreTimer" class="score-bar" aria-live="polite" aria-atomic="true"></div>
-        </div>
-      `;
-      document.getElementById('flip').onclick = () => { showAnswer = !showAnswer; renderCard(); };
-      document.getElementById('prev').onclick = () => {
-        if (currentIndex > 0) {
-          prevCardIndex = currentIndex;
-          currentIndex--; showAnswer = false; renderCard('left');
-        }
-      };
-      document.getElementById('next').onclick = () => {
-        if (scoreEnabled && answerStatusArr[currentIndex] === null) {
-          if (showAnswer) {
-            answerStatusArr[currentIndex] = false;
-          } else {
-            const correct = confirm('✅ Did you answer correctly?');
-            if (correct) score++;
-            answerStatusArr[currentIndex] = !!correct;
+          }
+        },
+        y: {
+          beginAtZero: true, 
+          max: 100,
+          ticks: {
+            font: {
+              size: 10 // ✅ Smaller font
+            }
           }
         }
-        if (currentIndex < currentSet.length - 1) {
-          prevCardIndex = currentIndex;
-          currentIndex++; showAnswer = false; renderCard('right');
-        }
-      };
-      document.getElementById('end').onclick = () => {
-        if (scoreEnabled && answerStatusArr[currentIndex] === null) {
-          if (showAnswer) answerStatusArr[currentIndex] = false;
-          else {
-            const correct = confirm('✅ For this card, did you answer correctly?');
-            if (correct) score++;
-            answerStatusArr[currentIndex] = !!correct;
+      },
+      plugins: {
+        legend: {
+          labels: {
+            font: {
+              size: 11 // ✅ Smaller legend
+            }
           }
         }
-        if (timerId) clearInterval(timerId);
-        let finalScore = scoreEnabled ? `Your score: ${score} / ${currentSet.length}` : '';
-        alert(`Test ended! ${finalScore}`);
-        showSets();
-      };
-      document.querySelector('.card').onclick = () => { showAnswer = !showAnswer; renderCard(); };
-      updateScoreTimer();
-    }
-
-    // Analytics calendar view
-    function showCalendarAnalytics() {
-      let vis = JSON.parse(localStorage.getItem('fcVisits') || "{}");
-      let now = new Date();
-      let monthsArr = [];
-      for (let k = 1; k <= 2; ++k) {
-        let y = now.getFullYear(), m = now.getMonth() - k + 1;
-        if (m < 0) { m += 12; y--; }
-        monthsArr.push({ y, m });
       }
-      let html = `<div class="form-box" style="margin-bottom:0;"><div style="font-weight:700;color:var(--accent);font-size:1.18rem;margin-bottom:18px;">App Usage Analytics <span style="font-size:1.02rem;font-weight:400;color:var(--orange);">(last 2 months)</span></div>`;
-      monthsArr.forEach(({ y, m }) => {
-        let ref = new Date(y, m, 1);
-        let label = ref.toLocaleString(undefined, { month: 'long', year: 'numeric' });
-        html += `<div style="color:var(--yellow);font-weight:600;margin:15px auto 4px auto;text-align:left">${label}</div>`;
-        html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">`;
-        ['S', 'M', 'T', 'W', 'T', 'F', 'S'].forEach(d => { html += `<span style="width:28px;color:#555;font-size:.98em;text-align:center;">${d}</span>`; });
-        let start = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
-        for (let i = 0; i < start; ++i) html += `<span style="width:28px;"></span>`;
-        for (let d = 1; d <= days; ++d) {
-          let id = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-          let isActive = vis[id] ? 1 : 0, isToday = (id === new Date().toISOString().slice(0, 10));
-          let calStyle = `width:28px;height:28px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;`;
-          if (isActive) calStyle += `background:var(--accent);color:#181300;`;
-          else calStyle += `background:#23252a;color:#555;`;
-          if (isToday) calStyle += `box-shadow:0 0 0 2.5px var(--yellow);font-weight:700;`;
-          html += `<span style="${calStyle}">${d}</span>`;
+    } 
+  });
+  
+  timeChart = new Chart(ctxT, { 
+    type: 'bar', 
+    data: {
+      labels: shortLabels, // ✅ Use shortened labels
+      datasets: [{ 
+        label: 'Minutes', 
+        data: timeData,
+        backgroundColor: 'rgba(255,179,0,0.18)', 
+        borderColor: '#ffb300' 
+      }] 
+    }, 
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          ticks: {
+            maxRotation: 45, // ✅ Rotate labels for better fit
+            font: {
+              size: 10 // ✅ Smaller font
+            }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            font: {
+              size: 10 // ✅ Smaller font
+            }
+          }
         }
-        html += `</div>`;
-      });
-      html += `<div style="color:#f5d76e;font-size:.97rem;margin-top:12px;text-align:center;">Yellow days = days you used the app<br>Gray = inactive days</div></div>`;
-      app.innerHTML = html;
-    }
+      },
+      plugins: {
+        legend: {
+          labels: {
+            font: {
+              size: 11 // ✅ Smaller legend
+            }
+          }
+        }
+      }
+    } 
+  });
+}
 
-    // Save visit analytics for usage tracking
-    function saveVisitAnalytics() {
-      const vis = JSON.parse(localStorage.getItem('fcVisits') || '{}');
-      vis[new Date().toISOString().slice(0, 10)] = 1;
-      localStorage.setItem('fcVisits', JSON.stringify(vis));
-    }
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function (e) {
-      if (app.childElementCount === 0) return;
-      if (["ArrowRight"].includes(e.key)) document.getElementById('nextBtn')?.click();
-      if (["ArrowLeft"].includes(e.key)) document.getElementById('prevBtn')?.click();
-      if (e.key === " " || e.key === "Enter") document.getElementById('flipBtn')?.click();
+
+/* small calendar renderer (current month, 7 columns) */
+function renderSmallCalendar(dayCounts){
+  calGrid.innerHTML = '';
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  calMonthLabel.textContent = now.toLocaleString(undefined, {month:'long', year:'numeric'});
+  const firstOfMonth = new Date(year, month, 1);
+  const startDay = firstOfMonth.getDay(); // 0 Sun .. 6 Sat
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  
+  // Build grid cells: show day numbers into 6 rows if needed
+  const totalCells = Math.ceil((startDay + daysInMonth) / 7) * 7;
+  for(let i=0;i<totalCells;i++){
+    const cell = document.createElement('div'); 
+    cell.className='cal-cell';
+    const dayIndex = i - startDay + 1;
+    if(dayIndex < 1 || dayIndex > daysInMonth){
+      cell.textContent = '';
+      cell.style.background = '#060708';
+      cell.style.color = '#111';
+      cell.style.opacity = '0.5';
+    } else {
+      const dateObj = new Date(year, month, dayIndex);
+      const key = dateObj.toISOString().slice(0,10);
+      const isActive = !!dayCounts[key];
+      cell.textContent = String(dayIndex);
+      if(isActive){
+        cell.classList.add('active');
+      } else {
+        cell.style.background = '#0b0d0e';
+        cell.style.color = '#555';
+      }
+    }
+    calGrid.appendChild(cell);
+  }
+}
+
+/* local activity record so calendar highlights even when offline */
+function saveLocalActivity(dateObj){
+  try {
+    const key = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()).toISOString().slice(0,10);
+    const obj = JSON.parse(localStorage.getItem('fc_activity')||'{}');
+    obj[key] = (obj[key]||0)+1;
+    localStorage.setItem('fc_activity', JSON.stringify(obj));
+  } catch(e){ console.warn('saveLocalActivity', e); }
+}
+
+/* ================== Import ================== */
+importBtn.onclick = async ()=>{
+  const {result, values} = await showModal('Import flashcard set (JSON)', `
+    <div>
+      <label class="small-muted">Paste JSON array of cards [{q:"",a:"",tag:"",bookmarked:false}, ...]</label>
+      <textarea id="jsonImport" rows="8"></textarea>
+      <div class="small-muted">Categories will be auto-detected for imported cards</div>
+    </div>`, 
+    [{text:'Import'},{text:'Cancel'}]);
+  
+  if(result===0){
+    try {
+      const data = JSON.parse(values.jsonImport || '[]');
+      if(!Array.isArray(data)) throw new Error('JSON must be array');
+      
+      const {result:nres, values:v2} = await showModal('Set name','<div><input id="importName" placeholder="Set name"/></div>', [{text:'Save'},{text:'Cancel'}]);
+      if(nres===0){
+        const nm = v2.importName?.trim(); 
+        if(!nm) throw new Error('Missing set name');
+        
+        showLoadingState('Importing and categorizing cards...');
+        
+        const normalizedCards = [];
+        for (const card of data) {
+          const category = await categorizeWithAI(card.q || '', card.a || '');
+          normalizedCards.push({
+            q: card.q || '',
+            a: card.a || '',
+            tag: card.tag || 'medium',
+            bookmarked: !!card.bookmarked,
+            category: category,
+            notes: card.notes || ''
+          });
+          
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        hideLoadingState();
+        
+        await saveSetToFirestore(nm, normalizedCards);
+        await loadUserSets(); 
+        renderSets(); 
+        await showModal('Imported',`<div class="small-muted">Successfully imported and categorized ${normalizedCards.length} cards!</div>`,[{text:'OK'}]);
+      }
+    } catch(e){ 
+      hideLoadingState();
+      await showModal('Error',`<div class="small-muted">${e.message}</div>`,[{text:'OK'}]); 
+    }
+  }
+};
+
+
+/* ================== Refresh Categories ================== */
+document.getElementById('refreshCategoriesBtn').onclick = () => {
+  renderCategories();
+};
+
+/* ================== Modal helpers ================== */
+function showModal(title, htmlContent, buttons=[{text:'OK'}], options={}) {
+  return new Promise((resolve)=>{
+    const root = document.getElementById('modalRoot'); 
+    root.style.display='block';
+    const back = document.createElement('div'); 
+    back.className='modal-back';
+    back.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" style="width:${options.width||'420px'}">
+        <h3>${escapeHtml(title)}</h3>
+        <div style="margin-top:8px">${htmlContent}</div>
+        <div class="controls"></div>
+      </div>`;
+    
+    const btnContainer = back.querySelector('.controls');
+    buttons.forEach((b,i)=>{
+      const btn = document.createElement('button'); 
+      btn.className = 'btn ' + (b.className||''); 
+      btn.innerText = b.text;
+      btn.onclick = ()=> {
+        const inputs = back.querySelectorAll('input,textarea,select'); 
+        const values = {};
+        inputs.forEach(inp=> { 
+          const key = inp.id || inp.name || `v${Math.random()}`; 
+          if(inp.type==='checkbox') values[key] = inp.checked; 
+          else values[key] = inp.value; 
+        });
+        cleanup(); 
+        resolve({result:i, values});
+      };
+      btnContainer.appendChild(btn);
     });
+    
+    function cleanup(){ 
+      root.style.display='none'; 
+      back.remove(); 
+    }
+    
+    back.onclick = (e)=> { 
+      if(e.target===back){ 
+        cleanup(); 
+        resolve({result:-1, values:{}}); 
+      } 
+    };
+    
+    document.body.appendChild(back);
+    if(options.focus) setTimeout(()=> back.querySelector(options.focus)?.focus(),60);
+  });
+}
 
-    // Initial visit analytics
-    saveVisitAnalytics();
+/* Mark-answer modal */
+function showModalMarkAnswer(){
+  return new Promise((resolve)=>{
+    const root = document.getElementById('modalRoot'); 
+    root.style.display='block';
+    const back = document.createElement('div'); 
+    back.className='modal-back';
+    back.innerHTML = `
+      <div class="modal" role="dialog" aria-modal="true" style="width:420px">
+        <h3 style="color:var(--accent)">Mark your answer</h3>
+        <div style="margin-top:8px">Did you answer this card correctly?</div>
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:12px">
+          <button id="wrongBtn" class="btn" style="background:linear-gradient(90deg,#ff7a6b,#ffb48f)">Wrong</button>
+          <button id="skipBtn" class="btn ghost">Skip</button>
+          <button id="correctBtn" class="btn" style="background:linear-gradient(90deg,var(--accent-2),var(--accent))">Correct</button>
+        </div>
+      </div>`;
+    
+    document.body.appendChild(back);
+    back.querySelector('#wrongBtn').onclick = ()=> { cleanup(); resolve({result:0}); };
+    back.querySelector('#skipBtn').onclick = ()=> { cleanup(); resolve({result:1}); };
+    back.querySelector('#correctBtn').onclick = ()=> { cleanup(); resolve({result:2}); };
+    
+    function cleanup(){ 
+      root.style.display='none'; 
+      back.remove(); 
+    }
+    
+    back.onclick = (e)=> { 
+      if(e.target===back){ 
+        cleanup(); 
+        resolve({result:-1}); 
+      } 
+    };
+  });
+}
 
-    // Buttons initial wiring
-    testBtn.onclick = showSets;
-    makeBtn.onclick = showCreateUI;
-    analyticsBtn.onclick = showCalendarAnalytics;
-  </script>
+/* ================== Utilities ================== */
+function shuffleArray(arr){ 
+  for(let i=arr.length-1;i>0;i--){ 
+    const j=Math.floor(Math.random()*(i+1)); 
+    [arr[i],arr[j]]=[arr[j],arr[i]]; 
+  } 
+}
+
+function formatTime(sec){ 
+  const m=Math.floor(sec/60).toString().padStart(2,'0'); 
+  const s=(sec%60).toString().padStart(2,'0'); 
+  return `${m}:${s}`; 
+}
+
+/* ================== Keyboard Shortcuts ================== */
+/* ================== Keyboard Shortcuts ================== */
+document.addEventListener('keydown', (e) => {
+  // ✅ FIXED: Check if user is typing in an input field
+  const activeElement = document.activeElement;
+  const isTyping = activeElement && (
+    activeElement.tagName === 'INPUT' || 
+    activeElement.tagName === 'TEXTAREA' || 
+    activeElement.contentEditable === 'true' ||
+    activeElement.isContentEditable
+  );
+  
+  // Skip keyboard shortcuts if user is typing in an input field
+  if (isTyping) return;
+  
+  // Only process shortcuts during tests
+  if (!inTest) return;
+  
+  switch(e.code) {
+    case 'Space':
+    case 'ArrowUp':
+      e.preventDefault();
+      flipBtn.click();
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      if (!prevBtn.disabled) prevBtn.click();
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      if (!nextBtn.disabled) nextBtn.click();
+      break;
+    case 'Digit1':
+      e.preventDefault();
+      markAnswer(false); // Wrong
+      break;
+    case 'Digit2':
+      e.preventDefault();
+      markAnswer(true); // Correct
+      break;
+    case 'KeyS':
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        // Skip functionality
+        if (scoreChk.checked && answerStatus[currentIndex] === null) {
+          advanceIndex(1);
+        }
+      }
+      break;
+  }
+});
+
+
+/* ================== Touch Swipe Controls ================== */
+let touchStartX=0, touchStartT=0;
+cardWrap.addEventListener('touchstart', (e)=>{ 
+  if(e.touches && e.touches[0]){ 
+    touchStartX = e.touches[0].clientX; 
+    touchStartT = Date.now(); 
+  } 
+}, {passive:true});
+
+cardWrap.addEventListener('touchend', (e)=>{ 
+  if(e.changedTouches && e.changedTouches[0]){ 
+    const dx = e.changedTouches[0].clientX - touchStartX; 
+    const dt = Date.now() - touchStartT; 
+    if(Math.abs(dx)>60 && dt<700){ 
+      if(dx>0) markAnswer(true); 
+      else markAnswer(false); 
+    } 
+  } 
+});
+
+/* save local activity on page load as a small use-case */
+(function recordVisit(){
+  saveLocalActivity(new Date());
+})();
+
+/* ================== init small UI state ================== */
+function clearWorkArea(){ 
+  currentSetName=null; 
+  isQuizMode=false;
+  currentSetTitle.textContent='No set selected'; 
+  setStats.textContent=''; 
+  startTestBtn.disabled=true; 
+  clearCardWrap(); 
+  testNav.style.display='none'; 
+  timerAndScore.style.display='none'; 
+  analyticsPanel.style.display='none'; 
+}
+
+function emptyWorkArea(){ 
+  testNav.style.display='none'; 
+  timerAndScore.style.display='none'; 
+  clearCardWrap(); 
+}
+
+/* ================== Initialization ================== */
+(async function init(){
+  await new Promise(r=>setTimeout(r,60));
+  
+  // Initialize study streak display
+  updateStudyStreak();
+  
+  // Load data based on auth state
+  if(!userId){ 
+    renderSets(); 
+  } else { 
+    await loadUserSets(); 
+    renderSets(); 
+  }
+  
+  // Set default tab
+  switchTab('sets');
+  
+  console.log('📚 Flashcard Trainer Pro initialized successfully!');
+  console.log('🎯 Features loaded: AI Categorization, Spaced Repetition, Quiz Mode, Analytics');
+  console.log('⌨️ Keyboard shortcuts: Space/↑(Flip), ←→(Navigate), 1(Wrong), 2(Correct)');
+})();
+
+</script>
+<script>
+// Register service worker for PWA functionality
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(registration => {
+        console.log('SW registered successfully:', registration.scope);
+        
+        // Check for updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New content available, refresh to update
+              if (confirm('New version available! Refresh to update?')) {
+                window.location.reload();
+              }
+            }
+          });
+        });
+      })
+      .catch(error => {
+        console.log('SW registration failed:', error);
+      });
+  });
+}
+</script>
 </body>
 </html>
