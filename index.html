@@ -2035,7 +2035,25 @@ function updateScoreUI(){
 }
 
 /* end test */
-endBtn.onclick = ()=> { if(inTest) endTest(); };
+endBtn.onclick = ()=> { 
+  if (!inTest) return;
+
+  // ✅ FIX: If last card is unanswered and scoring is enabled, show review modal
+  if (scoreChk.checked && answerStatus[currentIndex] === null) {
+    showModalMarkAnswer().then(({result})=>{
+      if(result === 0) markAnswer(false);   // Wrong
+      else if(result === 1) {               // Skip
+        answerStatus[currentIndex] = null;
+        endTest();
+      }
+      else if(result === 2) markAnswer(true); // Correct
+      else endTest(); // closed without answer
+    });
+  } else {
+    endTest();
+  }
+};
+
 
 async function endTest(){
   if(!inTest) return;
